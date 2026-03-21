@@ -163,7 +163,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-import { createExpenseTemplate, flattenCategoryTree, formatCurrency, mapExpenseRecordToForm, mapHistoryEntry } from '@/app/canguan'
+import {
+  createExpenseTemplate,
+  flattenCategoryTree,
+  formatCurrency,
+  mapExpenseRecordToForm,
+  mapHistoryEntry,
+  toRangeQueryParams,
+} from '@/app/canguan'
 import PageHero from '@/components/common/PageHero.vue'
 import PageSection from '@/components/common/PageSection.vue'
 import MetricCard from '@/components/common/MetricCard.vue'
@@ -298,10 +305,10 @@ async function loadBaseData() {
 async function loadExpenses() {
   loading.value = true
   try {
+    const dateParams = toRangeQueryParams(query.value.dateRange)
     const result = await listExpensesApi({
       storeId: isClerk.value ? clerkStoreId.value : query.value.storeId,
-      dateStart: query.value.dateRange[0] || undefined,
-      dateEnd: query.value.dateRange[1] || undefined,
+      ...dateParams,
       categoryLevel1Id: query.value.categoryLevel1Id || '',
       categoryLevel2Id: query.value.categoryLevel2Id || '',
       itemName: query.value.itemName || undefined,

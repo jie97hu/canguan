@@ -11,6 +11,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
+    private final StringToLocalDateConverter stringToLocalDateConverter;
+
+    public WebMvcConfig(StringToLocalDateConverter stringToLocalDateConverter) {
+        this.stringToLocalDateConverter = stringToLocalDateConverter;
+    }
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -28,5 +34,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registrar.setDateFormatter(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         registrar.setDateTimeFormatter(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         registrar.registerFormatters(registry);
+        registry.addConverter(stringToLocalDateConverter);
     }
 }

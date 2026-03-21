@@ -16,17 +16,17 @@
     </PageHero>
 
     <PageSection title="分店列表" description="支持按名称或编码筛选，并直接启停分店。">
-      <el-form :model="filters" inline label-position="top" class="responsive-filter-form">
-        <el-form-item label="关键字">
+      <el-form :model="filters" inline label-position="top" class="responsive-filter-form store-filter-form">
+        <el-form-item label="关键字" class="store-filter-form__keyword">
           <el-input v-model="filters.keyword" clearable placeholder="搜索名称或编码" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="状态" class="store-filter-form__status">
           <el-select v-model="filters.status" clearable placeholder="全部状态">
             <el-option label="启用" value="ENABLED" />
             <el-option label="停用" value="DISABLED" />
           </el-select>
         </el-form-item>
-        <el-form-item label="操作">
+        <el-form-item label="操作" class="store-filter-form__actions">
           <div class="form-actions">
             <el-button type="primary" :loading="loading" @click="applyFilter">查询</el-button>
             <el-button @click="resetFilter">重置</el-button>
@@ -219,6 +219,18 @@ onMounted(() => {
   padding: 20px;
   display: grid;
   gap: 18px;
+}
+
+.store-filter-form :deep(.el-form-item__content) {
+  width: 100%;
+}
+
+.store-filter-form__keyword {
+  width: 180px;
+}
+
+.store-filter-form__status {
+  width: 108px;
 }
 
 @media (max-width: 720px) {

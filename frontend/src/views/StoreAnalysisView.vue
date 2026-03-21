@@ -56,7 +56,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
-import { buildBarChart, formatCurrency, mapDonutItems, mapTrendPoints } from '@/app/canguan'
+import { buildBarChart, formatCurrency, mapDonutItems, mapTrendPoints, toRangeQueryParams } from '@/app/canguan'
 import PageHero from '@/components/common/PageHero.vue'
 import PageSection from '@/components/common/PageSection.vue'
 import MetricCard from '@/components/common/MetricCard.vue'
@@ -159,10 +159,10 @@ async function loadAnalysis() {
 
   loading.value = true
   try {
+    const dateParams = toRangeQueryParams([dateRange.start, dateRange.end])
     const params = {
       storeId: selectedStoreId.value,
-      dateStart: dateRange.start,
-      dateEnd: dateRange.end,
+      ...dateParams,
     }
     const [overviewRes, trendRes, categoryRes, rankingRes, recentRes] = await Promise.all([
       getOverviewApi(params),

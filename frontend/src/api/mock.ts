@@ -308,8 +308,8 @@ function filterCategories(query: Record<string, string>, tree = false) {
 
 function filterExpenses(query: Record<string, string>) {
   const storeId = query.storeId?.trim()
-  const dateStart = query.dateStart?.trim()
-  const dateEnd = query.dateEnd?.trim()
+  const dateStart = query.dateStart?.trim().slice(0, 10)
+  const dateEnd = query.dateEnd?.trim().slice(0, 10)
   const categoryLevel1Id = query.categoryLevel1Id?.trim()
   const categoryLevel2Id = query.categoryLevel2Id?.trim()
   const itemName = query.itemName?.trim().toLowerCase() ?? ''

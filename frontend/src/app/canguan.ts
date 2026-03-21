@@ -94,10 +94,32 @@ export function mapTrendPoints(points: Array<{ label: string; amount: number }>)
   }))
 }
 
+function normalizeDateText(value: string | null | undefined) {
+  return value?.trim() || ''
+}
+
+export function withDayBoundary(value: string | null | undefined, boundary: 'start' | 'end') {
+  const dateText = normalizeDateText(value)
+  if (!dateText) {
+    return undefined
+  }
+  if (dateText.includes(' ')) {
+    return dateText
+  }
+  return `${dateText} ${boundary === 'start' ? '00:00:00' : '23:59:59'}`
+}
+
+export function toRangeQueryParams(dateRange: Array<string | null | undefined>) {
+  return {
+    dateStart: withDayBoundary(dateRange[0], 'start'),
+    dateEnd: withDayBoundary(dateRange[1], 'end'),
+  }
+}
+
 export function mapDonutItems(items: Array<{ categoryName: string; ratio: number }>): DonutChartItem[] {
   return items.map((item, index) => ({
     label: item.categoryName,
-    value: Number(item.ratio ?? 0) * 100,
+    value: Number((Number(item.ratio ?? 0) * 100).toFixed(2)),
     color: chartColors[index % chartColors.length],
   }))
 }

@@ -54,7 +54,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 
-import { buildBarChart, formatCurrency, mapDonutItems, mapTrendPoints } from '@/app/canguan'
+import { buildBarChart, formatCurrency, mapDonutItems, mapTrendPoints, toRangeQueryParams } from '@/app/canguan'
 import PageHero from '@/components/common/PageHero.vue'
 import PageSection from '@/components/common/PageSection.vue'
 import MetricCard from '@/components/common/MetricCard.vue'
@@ -140,17 +140,17 @@ async function loadStores() {
 async function loadDashboard() {
   loading.value = true
   try {
+    const dateParams = toRangeQueryParams([dateRange.start, dateRange.end])
     const params = {
       storeId: selectedStoreId.value,
-      dateStart: dateRange.start,
-      dateEnd: dateRange.end,
+      ...dateParams,
     }
     const [overviewRes, trendRes, categoryRes, rankingRes, comparisonRes] = await Promise.all([
       getOverviewApi(params),
       getTrendApi(params),
       getCategoryBreakdownApi({ ...params, categoryLevel: 1 }),
       getItemRankingApi({ ...params, topN: 5 }),
-      getStoreComparisonApi({ dateStart: dateRange.start, dateEnd: dateRange.end }),
+      getStoreComparisonApi(dateParams),
     ])
     overview.value = overviewRes
     trendRows.value = trendRes

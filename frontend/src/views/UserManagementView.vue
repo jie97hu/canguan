@@ -16,28 +16,28 @@
     </PageHero>
 
     <PageSection title="账号列表" description="支持角色筛选、门店筛选、状态切换和密码重置。">
-      <el-form :model="filters" inline label-position="top" class="responsive-filter-form">
-        <el-form-item label="关键字">
+      <el-form :model="filters" inline label-position="top" class="responsive-filter-form user-filter-form">
+        <el-form-item label="关键字" class="user-filter-form__keyword">
           <el-input v-model="filters.keyword" clearable placeholder="用户名 / 姓名" />
         </el-form-item>
-        <el-form-item label="角色">
+        <el-form-item label="角色" class="user-filter-form__select">
           <el-select v-model="filters.role" clearable placeholder="全部角色">
             <el-option label="老板" value="OWNER" />
             <el-option label="录入员" value="CLERK" />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="状态" class="user-filter-form__select">
           <el-select v-model="filters.status" clearable placeholder="全部状态">
             <el-option label="启用" value="ENABLED" />
             <el-option label="停用" value="DISABLED" />
           </el-select>
         </el-form-item>
-        <el-form-item label="门店">
+        <el-form-item label="门店" class="user-filter-form__store">
           <el-select v-model="filters.storeId" clearable placeholder="全部门店">
             <el-option v-for="store in stores" :key="store.id" :label="store.name" :value="store.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="操作">
+        <el-form-item label="操作" class="user-filter-form__actions">
           <div class="form-actions">
             <el-button type="primary" :loading="loading" @click="applyFilter">查询</el-button>
             <el-button @click="resetFilter">重置</el-button>
@@ -337,6 +337,22 @@ onMounted(async () => {
   padding: 20px;
   display: grid;
   gap: 18px;
+}
+
+.user-filter-form :deep(.el-form-item__content) {
+  width: 100%;
+}
+
+.user-filter-form__keyword {
+  width: 170px;
+}
+
+.user-filter-form__select {
+  width: 96px;
+}
+
+.user-filter-form__store {
+  width: 132px;
 }
 
 .grid {
