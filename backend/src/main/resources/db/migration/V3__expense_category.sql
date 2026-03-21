@@ -1,0 +1,50 @@
+CREATE TABLE IF NOT EXISTS expense_category (
+    id           BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    parent_id    BIGINT       NULL,
+    level        INT          NOT NULL,
+    name         VARCHAR(128) NOT NULL,
+    code         VARCHAR(64)  NOT NULL,
+    default_unit VARCHAR(32)  NULL,
+    sort_no      INT          NOT NULL DEFAULT 0,
+    status       VARCHAR(16)  NOT NULL DEFAULT 'ENABLED',
+    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_expense_category_code (code),
+    KEY idx_expense_category_parent (parent_id),
+    KEY idx_expense_category_level_status (level, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO expense_category (id, parent_id, level, name, code, default_unit, sort_no, status)
+VALUES
+    (1, NULL, 1, '食材', 'FOOD', NULL, 1, 'ENABLED'),
+    (2, 1, 2, '牛肉类', 'BEEF', '斤', 1, 'ENABLED'),
+    (3, 1, 2, '猪肉类', 'PORK', '斤', 2, 'ENABLED'),
+    (4, 1, 2, '鸡鸭蛋类', 'POULTRY_EGG', '斤', 3, 'ENABLED'),
+    (5, 1, 2, '大骨类', 'BONE', '斤', 4, 'ENABLED'),
+    (6, 1, 2, '面类', 'NOODLE', '斤', 5, 'ENABLED'),
+    (7, 1, 2, '蔬菜类', 'VEGETABLE', '斤', 6, 'ENABLED'),
+    (8, 1, 2, '米油类', 'RICE_OIL', '袋', 7, 'ENABLED'),
+    (9, NULL, 1, '调料/配料', 'SEASONING', NULL, 2, 'ENABLED'),
+    (10, 9, 2, '日常调味', 'DAILY_SPICE', '袋', 1, 'ENABLED'),
+    (11, 9, 2, '香料干货', 'DRY_SPICE', '袋', 2, 'ENABLED'),
+    (12, 9, 2, '干货类', 'DRIED_GOODS', '袋', 3, 'ENABLED'),
+    (13, 9, 2, '腌制配菜', 'PICKLED_SIDE', '袋', 4, 'ENABLED'),
+    (14, 9, 2, '豆制品类', 'BEAN_PRODUCT', '斤', 5, 'ENABLED'),
+    (15, NULL, 1, '耗材', 'CONSUMABLE', NULL, 3, 'ENABLED'),
+    (16, 15, 2, '打包耗材', 'PACKAGING', '箱', 1, 'ENABLED'),
+    (17, 15, 2, '办公耗材', 'OFFICE', '包', 2, 'ENABLED'),
+    (18, 15, 2, '清洁耗材', 'CLEANING', '包', 3, 'ENABLED'),
+    (19, NULL, 1, '费用', 'EXPENSE', NULL, 4, 'ENABLED'),
+    (20, 19, 2, '固定费用', 'FIXED_COST', '月', 1, 'ENABLED'),
+    (21, 19, 2, '经营费用', 'OPERATING_COST', '次', 2, 'ENABLED'),
+    (22, NULL, 1, '其他', 'OTHER', NULL, 5, 'ENABLED'),
+    (23, 22, 2, '员工相关', 'STAFF', '次', 1, 'ENABLED'),
+    (24, 22, 2, '其他支出', 'MISC', '次', 2, 'ENABLED')
+ON DUPLICATE KEY UPDATE
+    parent_id = VALUES(parent_id),
+    level = VALUES(level),
+    name = VALUES(name),
+    default_unit = VALUES(default_unit),
+    sort_no = VALUES(sort_no),
+    status = VALUES(status),
+    updated_at = CURRENT_TIMESTAMP;
