@@ -42,40 +42,96 @@
         </div>
       </div>
 
-      <el-table v-loading="loading" :data="records" border stripe height="560">
-        <el-table-column prop="expenseDate" label="日期" width="110" />
-        <el-table-column prop="storeName" label="门店" width="130" />
-        <el-table-column label="一级/二级分类" min-width="180">
-          <template #default="{ row }">
-            {{ row.categoryLevel1Name }} / {{ row.categoryLevel2Name }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="itemName" label="品项名称" min-width="150" />
-        <el-table-column label="金额" width="120" align="right">
-          <template #default="{ row }">{{ formatCurrency(Number(row.amount)) }}</template>
-        </el-table-column>
-        <el-table-column label="数量/单位" width="120">
-          <template #default="{ row }">
-            {{ row.quantity ?? '-' }} {{ row.unit || '' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="createdByName" label="创建人" width="120" />
-        <el-table-column label="状态" width="90">
-          <template #default>
-            <StatusTag value="NORMAL" />
-          </template>
-        </el-table-column>
-        <el-table-column label="更新时间" width="180" prop="updatedAt" />
-        <el-table-column label="操作" width="230" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="openHistory(row)">历史</el-button>
-            <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button link type="danger" @click="deleteRow(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div v-if="appStore.isMobile" class="expense-mobile-list" v-loading="loading">
+        <el-empty v-if="!records.length" description="暂无支出记录" />
+        <article v-for="row in records" :key="row.id" class="expense-mobile-card">
+          <div class="expense-mobile-card__top">
+            <div>
+              <div class="expense-mobile-card__item">{{ row.itemName }}</div>
+              <div class="expense-mobile-card__date">{{ row.expenseDate }} · {{ row.storeName }}</div>
+            </div>
+            <div class="expense-mobile-card__amount">{{ formatCurrency(Number(row.amount)) }}</div>
+          </div>
 
-      <div class="pager">
+          <div class="expense-mobile-card__body">
+            <div class="expense-mobile-card__line">
+              <span>分类</span>
+              <strong>{{ row.categoryLevel1Name }} / {{ row.categoryLevel2Name }}</strong>
+            </div>
+            <div class="expense-mobile-card__line">
+              <span>数量</span>
+              <strong>{{ row.quantity ?? '-' }} {{ row.unit || '' }}</strong>
+            </div>
+            <div class="expense-mobile-card__line">
+              <span>创建人</span>
+              <strong>{{ row.createdByName }}</strong>
+            </div>
+            <div class="expense-mobile-card__line">
+              <span>更新时间</span>
+              <strong>{{ row.updatedAt }}</strong>
+            </div>
+            <div v-if="row.remark" class="expense-mobile-card__remark">{{ row.remark }}</div>
+          </div>
+
+          <div class="mobile-row-actions">
+            <el-button text type="primary" @click="openHistory(row)">历史</el-button>
+            <el-button text type="primary" @click="openEdit(row)">编辑</el-button>
+            <el-button text type="danger" @click="deleteRow(row)">删除</el-button>
+          </div>
+        </article>
+      </div>
+
+      <div v-else class="table-shell table-shell--wide">
+        <el-table v-loading="loading" :data="records" border stripe height="560">
+          <el-table-column prop="expenseDate" label="日期" width="110" />
+          <el-table-column prop="storeName" label="门店" width="130" />
+          <el-table-column label="一级/二级分类" min-width="180">
+            <template #default="{ row }">
+              {{ row.categoryLevel1Name }} / {{ row.categoryLevel2Name }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="itemName" label="品项名称" min-width="150" />
+          <el-table-column label="金额" width="120" align="right">
+            <template #default="{ row }">{{ formatCurrency(Number(row.amount)) }}</template>
+          </el-table-column>
+          <el-table-column label="数量/单位" width="120">
+            <template #default="{ row }">
+              {{ row.quantity ?? '-' }} {{ row.unit || '' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdByName" label="创建人" width="120" />
+          <el-table-column label="状态" width="90">
+            <template #default>
+              <StatusTag value="NORMAL" />
+            </template>
+          </el-table-column>
+          <el-table-column label="更新时间" width="180" prop="updatedAt" />
+          <el-table-column label="操作" width="230" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="openHistory(row)">历史</el-button>
+              <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+              <el-button link type="danger" @click="deleteRow(row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <div v-if="appStore.isMobile" class="pager pager-mobile">
+        <div class="pager-mobile__summary">
+          共 {{ total }} 条 · 第 {{ pageNo }} / {{ totalPages }} 页
+        </div>
+        <el-select v-model="pageSize" class="pager-mobile__size" @change="handlePageSizeChange">
+          <el-option v-for="size in [10, 20, 30, 50]" :key="size" :label="`${size} 条/页`" :value="size" />
+        </el-select>
+        <div class="pager-mobile__actions">
+          <el-button :disabled="pageNo <= 1" @click="changePage(pageNo - 1)">上一页</el-button>
+          <el-button type="primary" plain :disabled="pageNo >= totalPages" @click="changePage(pageNo + 1)">
+            下一页
+          </el-button>
+        </div>
+      </div>
+
+      <div v-else class="pager">
         <el-pagination
           v-model:current-page="pageNo"
           v-model:page-size="pageSize"
@@ -117,6 +173,7 @@ import ExpenseFormDrawer from '@/components/expense/ExpenseFormDrawer.vue'
 import ExpenseHistoryDrawer from '@/components/expense/ExpenseHistoryDrawer.vue'
 import { listCategoryTreeApi, listStoresApi } from '@/api/catalog'
 import { createExpenseApi, deleteExpenseApi, listExpenseHistoryApi, listExpensesApi, updateExpenseApi } from '@/api/expense'
+import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import type { CategoryNodeDto } from '@/types/category'
 import type { ExpenseRecordDto, ExpenseUpsertReq } from '@/types/expense'
@@ -131,6 +188,7 @@ function resolveDefaultDateRange() {
   return [toText(start), toText(end)]
 }
 
+const appStore = useAppStore()
 const authStore = useAuthStore()
 const loading = ref(false)
 const drawerSaving = ref(false)
@@ -216,6 +274,7 @@ const visibleMetrics = computed<MetricCardItem[]>(() => [
     tone: 'danger',
   },
 ])
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value) || 1))
 
 async function loadBaseData() {
   const categoryPromise = listCategoryTreeApi()
@@ -363,6 +422,14 @@ function handlePageSizeChange(size: number) {
   loadExpenses()
 }
 
+function changePage(nextPage: number) {
+  if (nextPage < 1 || nextPage > totalPages.value) {
+    return
+  }
+  pageNo.value = nextPage
+  loadExpenses()
+}
+
 onMounted(async () => {
   try {
     await loadBaseData()
@@ -414,6 +481,99 @@ onMounted(async () => {
   justify-content: flex-end;
 }
 
+.expense-mobile-list {
+  display: grid;
+  gap: 12px;
+}
+
+.expense-mobile-card {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(28, 39, 72, 0.08);
+  background: rgba(248, 250, 255, 0.92);
+}
+
+.expense-mobile-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.expense-mobile-card__item {
+  font-size: 16px;
+  font-weight: 800;
+  color: #17203d;
+}
+
+.expense-mobile-card__date {
+  margin-top: 4px;
+  color: #6b7691;
+  font-size: 12px;
+}
+
+.expense-mobile-card__amount {
+  color: #2858ff;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.expense-mobile-card__body {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.expense-mobile-card__line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.expense-mobile-card__line span {
+  color: #7a839d;
+  font-size: 12px;
+}
+
+.expense-mobile-card__line strong {
+  flex: 1;
+  text-align: right;
+  color: #17203d;
+  font-size: 13px;
+}
+
+.expense-mobile-card__remark {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #5f6984;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.pager-mobile {
+  display: grid;
+  gap: 12px;
+}
+
+.pager-mobile__summary {
+  color: #6a748f;
+  font-size: 13px;
+}
+
+.pager-mobile__size {
+  width: 100%;
+}
+
+.pager-mobile__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 @media (max-width: 1280px) {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -434,8 +594,23 @@ onMounted(async () => {
     align-items: stretch;
   }
 
+  .table-actions {
+    width: 100%;
+  }
+
   .quick-search {
     width: 100%;
+  }
+
+  .expense-mobile-card__top,
+  .expense-mobile-card__line {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .expense-mobile-card__amount,
+  .expense-mobile-card__line strong {
+    text-align: left;
   }
 }
 </style>

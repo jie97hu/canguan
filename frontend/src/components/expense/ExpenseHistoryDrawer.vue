@@ -1,5 +1,11 @@
 <template>
-  <el-drawer v-model="visible" title="支出历史" size="560px" destroy-on-close>
+  <el-drawer
+    v-model="visible"
+    title="支出历史"
+    :size="drawerSize"
+    class="expense-history-drawer"
+    destroy-on-close
+  >
     <div v-if="record" class="history-summary">
       <div class="history-title">{{ record.itemName }}</div>
       <div class="history-subtitle">
@@ -32,6 +38,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useAppStore } from '@/stores/app'
 import type { ExpenseRecordDto } from '@/types/expense'
 import type { ExpenseHistoryEntry } from '@/types/ui'
 
@@ -45,10 +52,12 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 
+const appStore = useAppStore()
 const visible = computed({
   get: () => props.modelValue,
   set: (value: boolean) => emit('update:modelValue', value),
 })
+const drawerSize = computed(() => (appStore.isMobile ? '100%' : '560px'))
 
 function actionText(action: ExpenseHistoryEntry['action']) {
   return action === 'CREATE' ? '新增' : action === 'UPDATE' ? '修改' : '删除'
@@ -60,6 +69,10 @@ function timelineType(action: ExpenseHistoryEntry['action']) {
 </script>
 
 <style scoped>
+.expense-history-drawer :deep(.el-drawer__header) {
+  margin-bottom: 0;
+}
+
 .history-summary {
   padding: 0 4px 18px;
   border-bottom: 1px solid rgba(28, 39, 72, 0.08);
@@ -120,5 +133,24 @@ function timelineType(action: ExpenseHistoryEntry['action']) {
 .history-text {
   color: #26314f;
   line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+  .expense-history-drawer :deep(.el-drawer__header) {
+    padding: 16px 16px 0;
+  }
+
+  .expense-history-drawer :deep(.el-drawer__body) {
+    padding: 12px 16px 16px;
+  }
+
+  .history-summary {
+    padding-inline: 0;
+  }
+
+  .history-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>

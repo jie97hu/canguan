@@ -29,6 +29,10 @@ defineProps<{
   background: rgba(255, 255, 255, 0.88);
 }
 
+.chart-card :deep(.el-card__body) {
+  padding: 20px;
+}
+
 .chart-head {
   display: flex;
   align-items: center;
@@ -56,5 +60,29 @@ defineProps<{
 
 .chart-body {
   min-height: 60px;
+}
+
+@media (max-width: 720px) {
+  .chart-card {
+    border-radius: 16px;
+  }
+
+  .chart-card :deep(.el-card__body) {
+    padding: 16px;
+  }
+
+  .chart-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chart-actions {
+    width: 100%;
+  }
+
+  .chart-actions :deep(.el-button),
+  .chart-actions :deep(.el-select) {
+    width: 100%;
+  }
 }
 </style>

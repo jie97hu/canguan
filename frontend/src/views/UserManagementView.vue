@@ -16,7 +16,7 @@
     </PageHero>
 
     <PageSection title="账号列表" description="支持角色筛选、门店筛选、状态切换和密码重置。">
-      <el-form :model="filters" inline label-position="top">
+      <el-form :model="filters" inline label-position="top" class="responsive-filter-form">
         <el-form-item label="关键字">
           <el-input v-model="filters.keyword" clearable placeholder="用户名 / 姓名" />
         </el-form-item>
@@ -38,39 +38,45 @@
           </el-select>
         </el-form-item>
         <el-form-item label="操作">
-          <el-button type="primary" :loading="loading" @click="applyFilter">查询</el-button>
-          <el-button @click="resetFilter">重置</el-button>
+          <div class="form-actions">
+            <el-button type="primary" :loading="loading" @click="applyFilter">查询</el-button>
+            <el-button @click="resetFilter">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="users" border stripe>
-        <el-table-column prop="username" label="用户名" width="160" />
-        <el-table-column prop="displayName" label="姓名" width="140" />
-        <el-table-column prop="role" label="角色" width="100">
-          <template #default="{ row }">{{ row.role === 'OWNER' ? '老板' : '录入员' }}</template>
-        </el-table-column>
-        <el-table-column prop="storeName" label="门店" min-width="150">
-          <template #default="{ row }">{{ row.storeName || '-' }}</template>
-        </el-table-column>
-        <el-table-column label="状态" width="90">
-          <template #default="{ row }">
-            <StatusTag :value="row.status" />
-          </template>
-        </el-table-column>
-        <el-table-column prop="updatedAt" label="更新时间" width="180" />
-        <el-table-column label="操作" width="260">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button link :type="row.status === 'ENABLED' ? 'warning' : 'success'" @click="toggleStatus(row)">
-              {{ row.status === 'ENABLED' ? '停用' : '启用' }}
-            </el-button>
-            <el-button link type="danger" @click="resetPassword(row)">重置密码</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="table-shell table-shell--wide">
+        <el-table v-loading="loading" :data="users" border stripe>
+          <el-table-column prop="username" label="用户名" width="160" />
+          <el-table-column prop="displayName" label="姓名" width="140" />
+          <el-table-column prop="role" label="角色" width="100">
+            <template #default="{ row }">{{ row.role === 'OWNER' ? '老板' : '录入员' }}</template>
+          </el-table-column>
+          <el-table-column prop="storeName" label="门店" min-width="150">
+            <template #default="{ row }">{{ row.storeName || '-' }}</template>
+          </el-table-column>
+          <el-table-column label="状态" width="90">
+            <template #default="{ row }">
+              <StatusTag :value="row.status" />
+            </template>
+          </el-table-column>
+          <el-table-column prop="updatedAt" label="更新时间" width="180" />
+          <el-table-column label="操作" width="260">
+            <template #default="{ row }">
+              <div class="mobile-row-actions">
+                <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+                <el-button link :type="row.status === 'ENABLED' ? 'warning' : 'success'" @click="toggleStatus(row)">
+                  {{ row.status === 'ENABLED' ? '停用' : '启用' }}
+                </el-button>
+                <el-button link type="danger" @click="resetPassword(row)">重置密码</el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </PageSection>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="620px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" :width="appStore.isMobile ? 'calc(100vw - 24px)' : '620px'">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <div class="grid">
           <el-form-item label="用户名" prop="username">
@@ -111,8 +117,10 @@
         </div>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="saveUser">保存</el-button>
+        <div class="dialog-footer-actions">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="saving" @click="saveUser">保存</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -126,11 +134,13 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import PageHero from '@/components/common/PageHero.vue'
 import PageSection from '@/components/common/PageSection.vue'
 import StatusTag from '@/components/common/StatusTag.vue'
+import { useAppStore } from '@/stores/app'
 import { createUserApi, listStoresApi, listUsersApi, patchUserStatusApi, resetUserPasswordApi, updateUserApi } from '@/api/catalog'
 import type { AppRole } from '@/types/auth'
 import type { StoreDto } from '@/types/store'
 import type { UserDto, UserQueryReq, UserUpsertReq } from '@/types/user'
 
+const appStore = useAppStore()
 const loading = ref(false)
 const saving = ref(false)
 const stores = ref<StoreDto[]>([])

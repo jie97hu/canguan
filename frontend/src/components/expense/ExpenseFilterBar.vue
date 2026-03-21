@@ -1,5 +1,5 @@
 <template>
-  <el-form class="filter-bar" :model="model" inline label-position="top">
+  <el-form class="filter-bar responsive-filter-form" :model="model" inline label-position="top">
     <el-form-item label="门店">
       <el-select v-model="model.storeId" clearable placeholder="全部门店" class="filter-item">
         <el-option v-for="item in stores" :key="item.id" :label="item.name" :value="item.id" />
@@ -74,12 +74,6 @@ const dateRange = computed({
 </script>
 
 <style scoped>
-.filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 12px;
-}
-
 .filter-item {
   width: 240px;
 }
@@ -88,5 +82,18 @@ const dateRange = computed({
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+@media (max-width: 720px) {
+  .filter-item,
+  .action-group,
+  .action-group :deep(.el-button) {
+    width: 100%;
+  }
+
+  .action-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 </style>

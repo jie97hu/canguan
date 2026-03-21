@@ -1,5 +1,11 @@
 <template>
-  <el-drawer v-model="visible" :title="title" size="520px" destroy-on-close>
+  <el-drawer
+    v-model="visible"
+    :title="title"
+    :size="drawerSize"
+    class="expense-form-drawer"
+    destroy-on-close
+  >
     <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="expense-form">
       <el-form-item label="门店" prop="storeId">
         <el-select v-model="form.storeId" filterable :disabled="storeLocked" placeholder="选择门店">
@@ -57,6 +63,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import { createExpenseTemplate, getCategoryById, getCategoryChildren, unitOptions } from '@/app/canguan'
+import { useAppStore } from '@/stores/app'
 import type { CategoryNodeDto } from '@/types/category'
 import type { StoreDto } from '@/types/store'
 import type { ExpenseFormModel } from '@/types/ui'
@@ -84,12 +91,14 @@ const emit = defineEmits<{
   (e: 'submit', value: ExpenseFormModel): void
 }>()
 
+const appStore = useAppStore()
 const formRef = ref<FormInstance>()
 
 const visible = computed({
   get: () => props.modelValue,
   set: (value: boolean) => emit('update:modelValue', value),
 })
+const drawerSize = computed(() => (appStore.isMobile ? '100%' : '520px'))
 
 const form = reactive<ExpenseFormModel>(createExpenseTemplate({ stores: [], categories: [] }))
 
@@ -150,9 +159,27 @@ async function submitForm() {
 </script>
 
 <style scoped>
+.expense-form-drawer :deep(.el-drawer__header) {
+  margin-bottom: 0;
+}
+
+.expense-form-drawer :deep(.el-drawer__body) {
+  padding-bottom: 12px;
+}
+
+.expense-form-drawer :deep(.el-drawer__footer) {
+  border-top: 1px solid rgba(28, 39, 72, 0.08);
+}
+
 .expense-form {
   display: grid;
   gap: 4px;
+}
+
+.expense-form :deep(.el-select),
+.expense-form :deep(.el-date-editor),
+.expense-form :deep(.el-input-number) {
+  width: 100%;
 }
 
 .category-grid {
@@ -170,6 +197,28 @@ async function submitForm() {
 @media (max-width: 960px) {
   .category-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .expense-form-drawer :deep(.el-drawer__header) {
+    padding: 16px 16px 0;
+  }
+
+  .expense-form-drawer :deep(.el-drawer__body) {
+    padding: 12px 16px 16px;
+  }
+
+  .expense-form-drawer :deep(.el-drawer__footer) {
+    padding: 12px 16px 16px;
+  }
+
+  .drawer-actions {
+    width: 100%;
+  }
+
+  .drawer-actions :deep(.el-button) {
+    flex: 1;
   }
 }
 </style>

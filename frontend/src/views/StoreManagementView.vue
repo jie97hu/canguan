@@ -16,7 +16,7 @@
     </PageHero>
 
     <PageSection title="分店列表" description="支持按名称或编码筛选，并直接启停分店。">
-      <el-form :model="filters" inline label-position="top">
+      <el-form :model="filters" inline label-position="top" class="responsive-filter-form">
         <el-form-item label="关键字">
           <el-input v-model="filters.keyword" clearable placeholder="搜索名称或编码" />
         </el-form-item>
@@ -27,33 +27,39 @@
           </el-select>
         </el-form-item>
         <el-form-item label="操作">
-          <el-button type="primary" :loading="loading" @click="applyFilter">查询</el-button>
-          <el-button @click="resetFilter">重置</el-button>
+          <div class="form-actions">
+            <el-button type="primary" :loading="loading" @click="applyFilter">查询</el-button>
+            <el-button @click="resetFilter">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="stores" border stripe>
-        <el-table-column prop="code" label="编码" width="160" />
-        <el-table-column prop="name" label="名称" min-width="180" />
-        <el-table-column label="状态" width="100">
-          <template #default="{ row }">
-            <StatusTag :value="row.status" />
-          </template>
-        </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
-        <el-table-column prop="updatedAt" label="更新时间" width="180" />
-        <el-table-column label="操作" width="220">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button link :type="row.status === 'ENABLED' ? 'warning' : 'success'" @click="toggleStatus(row)">
-              {{ row.status === 'ENABLED' ? '停用' : '启用' }}
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="table-shell table-shell--wide">
+        <el-table v-loading="loading" :data="stores" border stripe>
+          <el-table-column prop="code" label="编码" width="160" />
+          <el-table-column prop="name" label="名称" min-width="180" />
+          <el-table-column label="状态" width="100">
+            <template #default="{ row }">
+              <StatusTag :value="row.status" />
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdAt" label="创建时间" width="180" />
+          <el-table-column prop="updatedAt" label="更新时间" width="180" />
+          <el-table-column label="操作" width="220">
+            <template #default="{ row }">
+              <div class="mobile-row-actions">
+                <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+                <el-button link :type="row.status === 'ENABLED' ? 'warning' : 'success'" @click="toggleStatus(row)">
+                  {{ row.status === 'ENABLED' ? '停用' : '启用' }}
+                </el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </PageSection>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="520px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" :width="appStore.isMobile ? 'calc(100vw - 24px)' : '520px'">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="名称" prop="name">
           <el-input v-model="form.name" placeholder="例如：南坪店" />
@@ -69,8 +75,10 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="saveStore">保存</el-button>
+        <div class="dialog-footer-actions">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="saving" @click="saveStore">保存</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -84,9 +92,11 @@ import { ElMessage } from 'element-plus'
 import PageHero from '@/components/common/PageHero.vue'
 import PageSection from '@/components/common/PageSection.vue'
 import StatusTag from '@/components/common/StatusTag.vue'
+import { useAppStore } from '@/stores/app'
 import { createStoreApi, listStoresApi, patchStoreStatusApi, updateStoreApi } from '@/api/catalog'
 import type { StoreDto, StoreQueryReq, StoreUpsertReq } from '@/types/store'
 
+const appStore = useAppStore()
 const loading = ref(false)
 const saving = ref(false)
 const stores = ref<StoreDto[]>([])

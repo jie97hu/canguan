@@ -30,6 +30,10 @@ defineProps<{
   backdrop-filter: blur(14px);
 }
 
+.page-section :deep(.el-card__body) {
+  padding: 20px;
+}
+
 .section-head {
   display: flex;
   align-items: center;
@@ -58,5 +62,32 @@ defineProps<{
 
 .section-body {
   min-height: 20px;
+}
+
+@media (max-width: 720px) {
+  .page-section {
+    border-radius: 16px;
+  }
+
+  .page-section :deep(.el-card__body) {
+    padding: 16px;
+  }
+
+  .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .section-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .section-actions :deep(.el-button),
+  .section-actions :deep(.el-select),
+  .section-actions :deep(.el-input) {
+    width: 100%;
+  }
 }
 </style>

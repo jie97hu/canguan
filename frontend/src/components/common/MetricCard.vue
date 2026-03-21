@@ -77,4 +77,26 @@ defineProps<MetricCardItem>()
   background: rgba(212, 72, 89, 0.12);
   color: #d44859;
 }
+
+@media (max-width: 720px) {
+  .metric-card {
+    border-radius: 16px;
+  }
+
+  .metric-top {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .metric-trend {
+    max-width: 100%;
+    word-break: break-word;
+  }
+
+  .metric-value {
+    font-size: 24px;
+  }
+}
 </style>

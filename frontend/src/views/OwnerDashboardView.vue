@@ -36,13 +36,15 @@
         <SvgBarChart :data="rankingChart" :format-value="formatCurrency" />
       </ChartCard>
       <PageSection title="门店对比" description="当前时间范围内各门店累计支出排名。">
-        <el-table v-loading="loading" :data="comparisonData" border stripe>
-          <el-table-column prop="rankNo" label="排名" width="90" />
-          <el-table-column prop="storeName" label="门店" min-width="140" />
-          <el-table-column label="累计支出" width="150">
-            <template #default="{ row }">{{ formatCurrency(row.amount) }}</template>
-          </el-table-column>
-        </el-table>
+        <div class="table-shell table-shell--narrow">
+          <el-table v-loading="loading" :data="comparisonData" border stripe>
+            <el-table-column prop="rankNo" label="排名" width="90" />
+            <el-table-column prop="storeName" label="门店" min-width="140" />
+            <el-table-column label="累计支出" width="150">
+              <template #default="{ row }">{{ formatCurrency(row.amount) }}</template>
+            </el-table-column>
+          </el-table>
+        </div>
       </PageSection>
     </div>
   </div>

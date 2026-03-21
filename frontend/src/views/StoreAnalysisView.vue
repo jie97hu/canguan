@@ -35,15 +35,17 @@
         <SvgBarChart :data="rankingChart" :format-value="formatCurrency" />
       </ChartCard>
       <PageSection title="最近支出" description="取当前门店最近录入的 5 条支出。">
-        <el-table v-loading="loading" :data="recentRows" border stripe>
-          <el-table-column prop="expenseDate" label="日期" width="110" />
-          <el-table-column prop="categoryLevel1Name" label="一级分类" width="120" />
-          <el-table-column prop="categoryLevel2Name" label="二级分类" width="120" />
-          <el-table-column prop="itemName" label="品项" min-width="130" />
-          <el-table-column label="金额" width="110">
-            <template #default="{ row }">{{ formatCurrency(Number(row.amount)) }}</template>
-          </el-table-column>
-        </el-table>
+        <div class="table-shell table-shell--medium">
+          <el-table v-loading="loading" :data="recentRows" border stripe>
+            <el-table-column prop="expenseDate" label="日期" width="110" />
+            <el-table-column prop="categoryLevel1Name" label="一级分类" width="120" />
+            <el-table-column prop="categoryLevel2Name" label="二级分类" width="120" />
+            <el-table-column prop="itemName" label="品项" min-width="130" />
+            <el-table-column label="金额" width="110">
+              <template #default="{ row }">{{ formatCurrency(Number(row.amount)) }}</template>
+            </el-table-column>
+          </el-table>
+        </div>
       </PageSection>
     </div>
   </div>

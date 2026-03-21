@@ -77,6 +77,13 @@ defineProps<{
   justify-content: flex-end;
 }
 
+.actions :deep(.el-button),
+.actions :deep(.el-select),
+.actions :deep(.el-input),
+.actions :deep(.el-date-editor) {
+  min-width: 0;
+}
+
 @media (max-width: 960px) {
   .page-hero {
     flex-direction: column;
@@ -84,6 +91,37 @@ defineProps<{
 
   .actions {
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-hero {
+    gap: 14px;
+    margin-bottom: 14px;
+    padding: 18px 16px;
+    border-radius: 18px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .description {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .actions :deep(.el-button),
+  .actions :deep(.el-select),
+  .actions :deep(.el-input),
+  .actions :deep(.el-date-editor) {
+    width: 100%;
   }
 }
 </style>

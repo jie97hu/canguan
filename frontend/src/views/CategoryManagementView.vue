@@ -45,31 +45,35 @@
           <div class="detail-row"><span>状态</span><StatusTag :value="selectedCategory.status" /></div>
         </div>
 
-        <el-table :data="childrenRows" border stripe class="children-table">
-          <el-table-column prop="name" label="名称" min-width="150" />
-          <el-table-column prop="code" label="编码" width="140" />
-          <el-table-column prop="defaultUnit" label="默认单位" width="120">
-            <template #default="{ row }">{{ row.defaultUnit || '-' }}</template>
-          </el-table-column>
-          <el-table-column prop="sortNo" label="排序" width="90" />
-          <el-table-column label="状态" width="90">
-            <template #default="{ row }">
-              <StatusTag :value="row.status" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="220">
-            <template #default="{ row }">
-              <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-              <el-button link :type="row.status === 'ENABLED' ? 'warning' : 'success'" @click="toggleStatus(row)">
-                {{ row.status === 'ENABLED' ? '停用' : '启用' }}
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <div class="table-shell table-shell--wide">
+          <el-table :data="childrenRows" border stripe class="children-table">
+            <el-table-column prop="name" label="名称" min-width="150" />
+            <el-table-column prop="code" label="编码" width="140" />
+            <el-table-column prop="defaultUnit" label="默认单位" width="120">
+              <template #default="{ row }">{{ row.defaultUnit || '-' }}</template>
+            </el-table-column>
+            <el-table-column prop="sortNo" label="排序" width="90" />
+            <el-table-column label="状态" width="90">
+              <template #default="{ row }">
+                <StatusTag :value="row.status" />
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="220">
+              <template #default="{ row }">
+                <div class="mobile-row-actions">
+                  <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+                  <el-button link :type="row.status === 'ENABLED' ? 'warning' : 'success'" @click="toggleStatus(row)">
+                    {{ row.status === 'ENABLED' ? '停用' : '启用' }}
+                  </el-button>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </PageSection>
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" :width="appStore.isMobile ? 'calc(100vw - 24px)' : '600px'">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <div class="grid">
           <el-form-item label="层级" prop="level">
@@ -110,8 +114,10 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="saveCategory">保存</el-button>
+        <div class="dialog-footer-actions">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="saving" @click="saveCategory">保存</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -126,9 +132,11 @@ import { flattenCategoryTree, unitOptions } from '@/app/canguan'
 import PageHero from '@/components/common/PageHero.vue'
 import PageSection from '@/components/common/PageSection.vue'
 import StatusTag from '@/components/common/StatusTag.vue'
+import { useAppStore } from '@/stores/app'
 import { createCategoryApi, listCategoryTreeApi, patchCategoryStatusApi, updateCategoryApi } from '@/api/catalog'
 import type { CategoryNodeDto, CategoryUpsertReq } from '@/types/category'
 
+const appStore = useAppStore()
 const loading = ref(false)
 const saving = ref(false)
 const treeData = ref<CategoryNodeDto[]>([])
@@ -362,6 +370,11 @@ onMounted(() => {
 @media (max-width: 720px) {
   .page-wrap {
     padding: 12px;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .grid {
