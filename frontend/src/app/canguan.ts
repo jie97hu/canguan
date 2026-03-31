@@ -52,7 +52,7 @@ export function createExpenseTemplate(options: {
 
   return {
     storeId: options.storeId ?? options.stores[0]?.id ?? '',
-    expenseDate: options.expenseDate ?? new Date().toISOString().slice(0, 10),
+    expenseDate: options.expenseDate ?? toLocalDateString(new Date()),
     categoryLevel1Id: level1?.id ?? '',
     categoryLevel2Id: level2?.id ?? '',
     itemName: '',
@@ -98,6 +98,13 @@ function normalizeDateText(value: string | null | undefined) {
   return value?.trim() || ''
 }
 
+export function toLocalDateString(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 export function withDayBoundary(value: string | null | undefined, boundary: 'start' | 'end') {
   const dateText = normalizeDateText(value)
   if (!dateText) {
@@ -126,10 +133,14 @@ export function mapDonutItems(items: Array<{ categoryName: string; ratio: number
 
 export function buildBarChart(items: Array<{ label: string; value: number }>): BarChartItem[] {
   const maxValue = Math.max(...items.map((item) => item.value), 0)
+  const totalValue = items.reduce((sum, item) => sum + item.value, 0)
   return items.map((item, index) => ({
     label: item.label,
     value: item.value,
-    percentage: maxValue <= 0 ? 0 : Math.max(18, Math.round((item.value / maxValue) * 100)),
+    // 横条长度按第一名相对缩放，并保留最小可视宽度，避免小额项目完全看不见。
+    barWidthPercentage: maxValue <= 0 ? 0 : Math.max(18, Math.round((item.value / maxValue) * 100)),
+    // 右侧展示真实金额占比，避免把视觉宽度误读成财务占比。
+    sharePercentage: totalValue <= 0 ? 0 : Number(((item.value / totalValue) * 100).toFixed(2)),
     color: chartColors[index % chartColors.length],
   }))
 }

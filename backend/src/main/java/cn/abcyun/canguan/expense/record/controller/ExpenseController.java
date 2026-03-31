@@ -3,6 +3,7 @@ package cn.abcyun.canguan.expense.record.controller;
 import javax.validation.Valid;
 
 import cn.abcyun.canguan.expense.record.dto.ExpenseHistoryDto;
+import cn.abcyun.canguan.expense.record.dto.ExpenseItemOptionQueryRequest;
 import cn.abcyun.canguan.expense.record.dto.ExpenseQueryRequest;
 import cn.abcyun.canguan.expense.record.dto.ExpenseRecordDto;
 import cn.abcyun.canguan.expense.record.dto.ExpenseUpsertRequest;
@@ -34,6 +35,11 @@ public class ExpenseController {
     @GetMapping("/{id}")
     public ApiResponse<ExpenseRecordDto> get(@PathVariable("id") Long id) {
         return ApiResponse.success(expenseRecordService.get(id));
+    }
+
+    @GetMapping("/item-options")
+    public ApiResponse<java.util.List<String>> itemOptions(@Valid ExpenseItemOptionQueryRequest request) {
+        return ApiResponse.success(expenseRecordService.listItemOptions(request));
     }
 
     @PostMapping

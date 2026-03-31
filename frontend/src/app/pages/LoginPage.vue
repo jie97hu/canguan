@@ -33,12 +33,13 @@
 import { reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
 import { resolveHomePath } from '@/app/permission'
 import type { LoginReq } from '@/types/auth'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -65,7 +66,8 @@ async function submit() {
   try {
     await authStore.login(form)
     ElMessage.success(`欢迎回来，${authStore.displayName}`)
-    await router.replace(resolveHomePath(authStore.role))
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+    await router.replace(redirect || resolveHomePath(authStore.role))
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '登录失败')
   } finally {

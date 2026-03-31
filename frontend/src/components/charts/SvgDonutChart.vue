@@ -55,7 +55,7 @@ const segments = computed(() => {
   })
 })
 
-const totalText = computed(() => `${total.value}%`)
+const totalText = computed(() => (props.data.length ? '100%' : '0%'))
 </script>
 
 <style scoped>

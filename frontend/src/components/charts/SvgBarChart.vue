@@ -3,11 +3,11 @@
     <div v-for="item in data" :key="item.label" class="bar-row">
       <div class="bar-label">{{ item.label }}</div>
       <div class="bar-track">
-        <div class="bar-fill" :style="{ width: `${item.percentage}%`, background: item.color }" />
+        <div class="bar-fill" :style="{ width: `${item.barWidthPercentage}%`, background: item.color }" />
       </div>
       <div class="bar-meta">
         <span>{{ valueFormatter(item.value) }}</span>
-        <span>{{ item.percentage }}%</span>
+        <span>{{ formatPercentage(item.sharePercentage) }}</span>
       </div>
     </div>
   </div>
@@ -20,13 +20,21 @@ const props = defineProps<{
   data: Array<{
     label: string
     value: number
-    percentage: number
+    barWidthPercentage: number
+    sharePercentage: number
     color: string
   }>
   formatValue?: (value: number) => string
 }>()
 
 const valueFormatter = computed(() => props.formatValue ?? ((value: number) => `${value.toLocaleString('zh-CN')}`))
+
+function formatPercentage(value: number) {
+  if (Number.isInteger(value)) {
+    return `${value}%`
+  }
+  return `${value.toFixed(2)}%`
+}
 </script>
 
 <style scoped>
@@ -37,7 +45,7 @@ const valueFormatter = computed(() => props.formatValue ?? ((value: number) => `
 
 .bar-row {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr) 96px;
+  grid-template-columns: 120px minmax(0, 1fr) max-content;
   gap: 12px;
   align-items: center;
 }
@@ -61,10 +69,13 @@ const valueFormatter = computed(() => props.formatValue ?? ((value: number) => `
 }
 
 .bar-meta {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-auto-flow: column;
+  justify-content: end;
+  gap: 10px;
   font-size: 12px;
   color: #6a748f;
+  white-space: nowrap;
 }
 
 @media (max-width: 960px) {

@@ -25,7 +25,17 @@ export function installRouterGuards(router: Router, pinia: Pinia) {
     await authStore.bootstrap()
 
     if (to.path === '/') {
-      return resolveHomePath(authStore.role)
+      return authStore.isAuthenticated ? resolveHomePath(authStore.role) : { name: 'login' }
+    }
+
+    // 未登录时统一收口到登录页，避免直接打开业务地址或公共兜底页时绕过登录入口。
+    if (!authStore.isAuthenticated && to.name !== 'login') {
+      return {
+        name: 'login',
+        query: {
+          redirect: to.fullPath,
+        },
+      }
     }
 
     if (isRoutePublic(to.meta)) {
@@ -33,15 +43,6 @@ export function installRouterGuards(router: Router, pinia: Pinia) {
         return resolveHomePath(authStore.role)
       }
       return true
-    }
-
-    if (!authStore.isAuthenticated) {
-      return {
-        name: 'login',
-        query: {
-          redirect: to.fullPath,
-        },
-      }
     }
 
     const meta = to.meta as Partial<RouteAccessMeta>

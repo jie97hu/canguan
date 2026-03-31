@@ -410,6 +410,8 @@ select {
 
 .table-shell .el-table {
   width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .table-shell--wide .el-table {
@@ -422,6 +424,128 @@ select {
 
 .table-shell--narrow .el-table {
   min-width: 560px;
+}
+
+/* 表头样式 */
+.table-shell .el-table__header th.el-table__cell {
+  background: linear-gradient(135deg, rgba(40, 88, 255, 0.08) 0%, rgba(95, 127, 255, 0.06) 100%) !important;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--app-text);
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid rgba(40, 88, 255, 0.12) !important;
+  padding: 14px 12px;
+}
+
+.table-shell .el-table__header th.el-table__cell .cell {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+/* 行样式 */
+.table-shell .el-table__body tr.el-table__row {
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.table-shell .el-table__body tr.el-table__row:hover > td.el-table__cell {
+  background: rgba(40, 88, 255, 0.04) !important;
+}
+
+.table-shell .el-table__body tr.el-table__row:hover {
+  cursor: default;
+}
+
+/* 斑马纹优化 */
+.table-shell .el-table--striped .el-table__body tr.el-table__row:nth-child(even) > td.el-table__cell {
+  background: rgba(40, 88, 255, 0.02) !important;
+}
+
+.table-shell .el-table--striped .el-table__body tr.el-table__row:nth-child(even):hover > td.el-table__cell {
+  background: rgba(40, 88, 255, 0.06) !important;
+}
+
+/* 单元格样式 */
+.table-shell .el-table__body td.el-table__cell {
+  padding: 13px 12px;
+  font-size: 13.5px;
+  color: var(--app-text);
+  border-bottom: 1px solid rgba(20, 36, 70, 0.06) !important;
+  transition: background 0.15s ease;
+}
+
+.table-shell .el-table__body td.el-table__cell .cell {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+/* 最后一行无底边框 */
+.table-shell .el-table__body tr.el-table__row:last-child > td.el-table__cell {
+  border-bottom: none !important;
+}
+
+/* 操作按钮行间距优化 */
+.table-shell .el-table__body td.el-table__cell:has(.mobile-row-actions) .cell {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* 圆角边框优化 */
+.table-shell .el-table .el-table__border-left,
+.table-shell .el-table .el-table__border-right {
+  display: none;
+}
+
+/* 固定列阴影 */
+.table-shell .el-table .el-table__fixed {
+  border-radius: 16px 0 0 16px;
+}
+
+.table-shell .el-table .el-table__fixed-right {
+  border-radius: 0 16px 16px 0;
+}
+
+/* 加载遮罩层 */
+.table-shell .el-table__body-wrapper {
+  border-radius: 0 0 16px 16px;
+}
+
+.table-shell .el-table__header-wrapper {
+  border-radius: 16px 16px 0 0;
+}
+
+/* 分页器样式 */
+.table-shell ~ .pager .el-pagination {
+  padding: 8px 0;
+  font-weight: 500;
+}
+
+.table-shell ~ .pager .el-pagination .el-pager li {
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.table-shell ~ .pager .el-pagination .el-pager li:hover {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+.table-shell ~ .pager .el-pagination .el-pager li.is-active {
+  background: var(--app-primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(40, 88, 255, 0.28);
+}
+
+.table-shell ~ .pager .el-pagination .btn-prev,
+.table-shell ~ .pager .el-pagination .btn-next {
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.table-shell ~ .pager .el-pagination .btn-prev:hover,
+.table-shell ~ .pager .el-pagination .btn-next:hover {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
 }
 
 .responsive-filter-form {
@@ -634,6 +758,24 @@ select {
   .table-shell {
     margin-inline: calc(var(--app-content-padding-mobile) * -1);
     padding-inline: var(--app-content-padding-mobile);
+    border-radius: 0;
+  }
+
+  .table-shell .el-table {
+    border-radius: 12px;
+  }
+
+  .table-shell .el-table__header-wrapper {
+    border-radius: 12px 12px 0 0;
+  }
+
+  .table-shell .el-table__body-wrapper {
+    border-radius: 0 0 12px 12px;
+  }
+
+  .table-shell .el-table .el-table__fixed,
+  .table-shell .el-table .el-table__fixed-right {
+    border-radius: 0;
   }
 
   .table-shell--wide .el-table {

@@ -48,6 +48,13 @@ export interface ExpenseQueryReq {
   pageSize?: number
 }
 
+export interface ExpenseItemOptionQueryReq {
+  storeId?: number | ''
+  categoryLevel1Id: number
+  categoryLevel2Id: number
+  limit?: number
+}
+
 export interface ExpenseHistoryDto {
   id: number
   expenseRecordId: number

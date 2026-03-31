@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cn.abcyun.canguan.expense.category.entity.ExpenseCategory;
 import cn.abcyun.canguan.expense.category.service.CategoryService;
 import cn.abcyun.canguan.expense.record.dto.ExpenseHistoryDto;
+import cn.abcyun.canguan.expense.record.dto.ExpenseItemOptionQueryRequest;
 import cn.abcyun.canguan.expense.record.dto.ExpenseQueryRequest;
 import cn.abcyun.canguan.expense.record.dto.ExpenseRecordDto;
 import cn.abcyun.canguan.expense.record.dto.ExpenseUpsertRequest;
@@ -84,6 +85,24 @@ public class ExpenseRecordService {
         CurrentUserContext currentUser = currentUserProvider.requireCurrentUser();
         ExpenseRecord record = getVisibleRecord(id, currentUser);
         return toDto(record, loadStoreMap(java.util.Collections.singletonList(record)), loadUserMap(java.util.Collections.singletonList(record)));
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> listItemOptions(ExpenseItemOptionQueryRequest request) {
+        CurrentUserContext currentUser = currentUserProvider.requireCurrentUser();
+        Long storeId = resolveStoreIdForQuery(request.getStoreId(), currentUser, true);
+        ExpenseCategory level1 = categoryService.requireActiveCategory(request.getCategoryLevel1Id());
+        ExpenseCategory level2 = categoryService.requireActiveCategory(request.getCategoryLevel2Id());
+        validateCategoryRelation(level1, level2);
+        int limit = request.getLimit() == null ? 100 : request.getLimit();
+
+        // 候选品项必须沿用现有数据隔离规则，避免录入员通过联想结果看到其他门店的名称。
+        return expenseRecordRepository.findDistinctItemNames(
+                storeId,
+                level1.getId(),
+                level2.getId(),
+                PageRequest.of(0, limit)
+        );
     }
 
     @Transactional

@@ -1,5 +1,12 @@
 import { requestData } from '@/api/http'
-import type { ExpenseHistoryDto, ExpensePageResult, ExpenseQueryReq, ExpenseRecordDto, ExpenseUpsertReq } from '@/types/expense'
+import type {
+  ExpenseHistoryDto,
+  ExpenseItemOptionQueryReq,
+  ExpensePageResult,
+  ExpenseQueryReq,
+  ExpenseRecordDto,
+  ExpenseUpsertReq,
+} from '@/types/expense'
 
 export function listExpensesApi(params: ExpenseQueryReq = {}) {
   return requestData<ExpensePageResult>({
@@ -43,5 +50,13 @@ export function listExpenseHistoryApi(id: number) {
   return requestData<ExpenseHistoryDto[]>({
     url: `/expenses/${id}/history`,
     method: 'GET',
+  })
+}
+
+export function listExpenseItemOptionsApi(params: ExpenseItemOptionQueryReq) {
+  return requestData<string[]>({
+    url: '/expenses/item-options',
+    method: 'GET',
+    params,
   })
 }

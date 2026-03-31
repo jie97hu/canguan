@@ -169,6 +169,7 @@ import {
   formatCurrency,
   mapExpenseRecordToForm,
   mapHistoryEntry,
+  toLocalDateString,
   toRangeQueryParams,
 } from '@/app/canguan'
 import PageHero from '@/components/common/PageHero.vue'
@@ -191,8 +192,7 @@ function resolveDefaultDateRange() {
   const end = new Date()
   const start = new Date()
   start.setDate(end.getDate() - 6)
-  const toText = (value: Date) => value.toISOString().slice(0, 10)
-  return [toText(start), toText(end)]
+  return [toLocalDateString(start), toLocalDateString(end)]
 }
 
 const appStore = useAppStore()

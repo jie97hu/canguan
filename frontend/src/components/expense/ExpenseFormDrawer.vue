@@ -28,7 +28,18 @@
         </el-form-item>
       </div>
       <el-form-item label="品项名称" prop="itemName">
-        <el-input v-model="form.itemName" placeholder="例如：牛腩、一次性餐盒" />
+        <el-select
+          v-model="form.itemName"
+          filterable
+          allow-create
+          default-first-option
+          clearable
+          reserve-keyword
+          :loading="itemOptionsLoading"
+          placeholder="先下拉筛选，也可手动输入"
+        >
+          <el-option v-for="item in itemOptions" :key="item" :label="item" :value="item" />
+        </el-select>
       </el-form-item>
       <div class="category-grid">
         <el-form-item label="金额" prop="amount">
@@ -63,6 +74,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import { createExpenseTemplate, getCategoryById, getCategoryChildren, unitOptions } from '@/app/canguan'
+import { listExpenseItemOptionsApi } from '@/api/expense'
 import { useAppStore } from '@/stores/app'
 import type { CategoryNodeDto } from '@/types/category'
 import type { StoreDto } from '@/types/store'
@@ -93,6 +105,9 @@ const emit = defineEmits<{
 
 const appStore = useAppStore()
 const formRef = ref<FormInstance>()
+const itemOptions = ref<string[]>([])
+const itemOptionsLoading = ref(false)
+let itemOptionsRequestId = 0
 
 const visible = computed({
   get: () => props.modelValue,
@@ -107,7 +122,7 @@ const rules: FormRules<ExpenseFormModel> = {
   expenseDate: [{ required: true, message: '请选择支出日期', trigger: 'change' }],
   categoryLevel1Id: [{ required: true, message: '请选择一级分类', trigger: 'change' }],
   categoryLevel2Id: [{ required: true, message: '请选择二级分类', trigger: 'change' }],
-  itemName: [{ required: true, message: '请输入品项名称', trigger: 'blur' }],
+  itemName: [{ required: true, message: '请输入品项名称', trigger: ['blur', 'change'] }],
   amount: [{ required: true, message: '请输入金额', trigger: 'change' }],
 }
 
@@ -125,6 +140,9 @@ watch(
       if (!form.unit) {
         form.unit = resolveDefaultUnit(form.categoryLevel2Id)
       }
+      void loadItemOptions()
+    } else {
+      itemOptions.value = []
     }
   },
   { immediate: true },
@@ -138,6 +156,54 @@ function resolveDefaultUnit(categoryId: number | ''): string {
   return category?.defaultUnit ?? '斤'
 }
 
+function mergeCurrentItemName(options: string[]) {
+  const currentItemName = form.itemName.trim()
+  if (!currentItemName) {
+    return options
+  }
+  if (options.includes(currentItemName)) {
+    return options
+  }
+  return [currentItemName, ...options]
+}
+
+async function loadItemOptions() {
+  const requestId = ++itemOptionsRequestId
+
+  if (!visible.value) {
+    return
+  }
+  if (!form.categoryLevel1Id || !form.categoryLevel2Id) {
+    itemOptions.value = mergeCurrentItemName([])
+    return
+  }
+
+  itemOptionsLoading.value = true
+  try {
+    const options = await listExpenseItemOptionsApi({
+      storeId: form.storeId || undefined,
+      categoryLevel1Id: Number(form.categoryLevel1Id),
+      categoryLevel2Id: Number(form.categoryLevel2Id),
+      limit: 100,
+    })
+    if (requestId !== itemOptionsRequestId) {
+      return
+    }
+    // 保留当前输入值，避免编辑旧记录或手动补录时被候选列表覆盖。
+    itemOptions.value = mergeCurrentItemName(options)
+  } catch (error) {
+    if (requestId !== itemOptionsRequestId) {
+      return
+    }
+    itemOptions.value = mergeCurrentItemName([])
+    ElMessage.error(error instanceof Error ? error.message : '加载品项候选失败')
+  } finally {
+    if (requestId === itemOptionsRequestId) {
+      itemOptionsLoading.value = false
+    }
+  }
+}
+
 function handleLevel1Change(categoryId: number | '') {
   const next = getCategoryChildren(props.categories, categoryId).find((item) => item.status === 'ENABLED')
   form.categoryLevel2Id = next?.id ?? ''
@@ -147,6 +213,23 @@ function handleLevel1Change(categoryId: number | '') {
 function handleLevel2Change(categoryId: number | '') {
   form.unit = resolveDefaultUnit(categoryId)
 }
+
+watch(
+  () => [visible.value, form.storeId, form.categoryLevel1Id, form.categoryLevel2Id],
+  ([opened]) => {
+    if (!opened) {
+      return
+    }
+    void loadItemOptions()
+  },
+)
+
+watch(
+  () => form.itemName,
+  () => {
+    itemOptions.value = mergeCurrentItemName(itemOptions.value.filter((item, index, list) => list.indexOf(item) === index))
+  },
+)
 
 async function submitForm() {
   const valid = await formRef.value?.validate().catch(() => false)

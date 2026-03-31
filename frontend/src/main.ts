@@ -18,7 +18,6 @@ const pinia = createPinia()
 const router = createAppRouter()
 
 app.use(pinia)
-app.use(router)
 app.use(ElementPlus, { locale: zhCn })
 
 bootstrapFrontend({ pinia, router })
@@ -26,6 +25,9 @@ bootstrapFrontend({ pinia, router })
     // 入口初始化失败时仍然挂载应用，保证错误页和登录页可见。
     console.error('应用初始化失败', error)
   })
-  .finally(() => {
+  .finally(async () => {
+    // 先装配守卫再启动路由，避免首屏导航在未登录时先进入业务页再被重定向。
+    app.use(router)
+    await router.isReady()
     app.mount('#app')
   })

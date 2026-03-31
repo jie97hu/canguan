@@ -22,7 +22,8 @@ export interface DonutChartItem {
 export interface BarChartItem {
   label: string
   value: number
-  percentage: number
+  barWidthPercentage: number
+  sharePercentage: number
   color: string
 }
 

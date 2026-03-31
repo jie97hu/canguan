@@ -10,6 +10,17 @@
         <el-tag effect="light" round type="success">时间范围：{{ dateLabel }}</el-tag>
       </template>
       <template #actions>
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          value-format="YYYY-MM-DD"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          unlink-panels
+          :clearable="false"
+          class="date-range-picker"
+        />
         <el-select v-model="selectedStoreId" placeholder="选择门店" class="store-select">
           <el-option label="全部门店" value="" />
           <el-option v-for="store in stores" :key="store.id" :label="store.name" :value="store.id" />
@@ -54,7 +65,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 
-import { buildBarChart, formatCurrency, mapDonutItems, mapTrendPoints, toRangeQueryParams } from '@/app/canguan'
+import { buildBarChart, formatCurrency, mapDonutItems, mapTrendPoints, toLocalDateString, toRangeQueryParams } from '@/app/canguan'
 import PageHero from '@/components/common/PageHero.vue'
 import PageSection from '@/components/common/PageSection.vue'
 import MetricCard from '@/components/common/MetricCard.vue'
@@ -72,11 +83,7 @@ function resolveDateRange() {
   const end = new Date()
   const start = new Date()
   start.setDate(end.getDate() - 6)
-  const toText = (value: Date) => value.toISOString().slice(0, 10)
-  return {
-    start: toText(start),
-    end: toText(end),
-  }
+  return [toLocalDateString(start), toLocalDateString(end)]
 }
 
 const loading = ref(false)
@@ -87,9 +94,9 @@ const trendRows = ref<TrendPointDto[]>([])
 const categoryRows = ref<CategoryBreakdownDto[]>([])
 const rankingRows = ref<ItemRankingDto[]>([])
 const comparisonRows = ref<StoreComparisonDto[]>([])
-const dateRange = resolveDateRange()
+const dateRange = ref<string[]>(resolveDateRange())
 
-const dateLabel = `${dateRange.start} 至 ${dateRange.end}`
+const dateLabel = computed(() => (dateRange.value.length === 2 ? `${dateRange.value[0]} 至 ${dateRange.value[1]}` : '未限定'))
 const selectedStoreName = computed(() => stores.value.find((item) => item.id === selectedStoreId.value)?.name ?? '全部门店')
 const trendData = computed(() => mapTrendPoints(trendRows.value.map((item) => ({ label: item.label, amount: Number(item.amount) }))))
 const categoryData = computed(() => mapDonutItems(categoryRows.value.map((item) => ({ categoryName: item.categoryName, ratio: Number(item.ratio) }))))
@@ -109,7 +116,7 @@ const currentMetrics = computed<MetricCardItem[]>(() => {
     return [
       { label: '今日支出', value: formatCurrency(0), hint: '等待加载数据', trend: '0.00', tone: 'primary' },
       { label: '本月支出', value: formatCurrency(0), hint: '等待加载数据', trend: '0.00', tone: 'success' },
-      { label: '当前区间', value: formatCurrency(0), hint: dateLabel, trend: '0.00', tone: 'warning' },
+      { label: '当前区间', value: formatCurrency(0), hint: dateLabel.value, trend: '0.00', tone: 'warning' },
       { label: '支出最高门店', value: '-', hint: '暂无统计结果', trend: '0.00', tone: 'danger' },
     ]
   }
@@ -117,7 +124,7 @@ const currentMetrics = computed<MetricCardItem[]>(() => {
   return [
     { label: '今日支出', value: formatCurrency(Number(data.todayAmount)), hint: '按自然日统计', trend: `${selectedStoreName.value}`, tone: 'primary' },
     { label: '本月支出', value: formatCurrency(Number(data.monthAmount)), hint: '从月初累计到今天', trend: `${data.storeCount} 家门店`, tone: 'success' },
-    { label: '当前区间', value: formatCurrency(Number(data.rangeAmount)), hint: dateLabel, trend: `${comparisonRows.value.length} 条排行`, tone: 'warning' },
+    { label: '当前区间', value: formatCurrency(Number(data.rangeAmount)), hint: dateLabel.value, trend: `${comparisonRows.value.length} 条排行`, tone: 'warning' },
     {
       label: '支出最高门店',
       value: data.topStoreName || '-',
@@ -140,7 +147,7 @@ async function loadStores() {
 async function loadDashboard() {
   loading.value = true
   try {
-    const dateParams = toRangeQueryParams([dateRange.start, dateRange.end])
+    const dateParams = toRangeQueryParams(dateRange.value)
     const params = {
       storeId: selectedStoreId.value,
       ...dateParams,
@@ -176,6 +183,17 @@ onMounted(async () => {
 watch(selectedStoreId, () => {
   loadDashboard()
 })
+
+watch(
+  () => dateRange.value.join('|'),
+  (value, oldValue) => {
+    if (value === oldValue) {
+      return
+    }
+    // 时间筛选一旦变化，所有卡片和图表都要按同一口径重新加载。
+    loadDashboard()
+  },
+)
 </script>
 
 <style scoped>
@@ -205,6 +223,10 @@ watch(selectedStoreId, () => {
   width: 180px;
 }
 
+.date-range-picker {
+  width: 300px;
+}
+
 @media (max-width: 1280px) {
   .metric-grid,
   .board-grid {
@@ -223,6 +245,10 @@ watch(selectedStoreId, () => {
   }
 
   .store-select {
+    width: 100%;
+  }
+
+  .date-range-picker {
     width: 100%;
   }
 }

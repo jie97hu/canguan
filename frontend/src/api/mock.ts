@@ -670,6 +670,28 @@ function handleCategories(pathname: string, method: string, config: AxiosRequest
 }
 
 function handleExpenses(pathname: string, method: string, config: AxiosRequestConfig): ApiResponse<unknown> {
+  if (pathname === '/api/expenses/item-options' && method === 'GET') {
+    const query = parseUrl(config).query
+    const storeId = query.storeId?.trim()
+    const categoryLevel1Id = query.categoryLevel1Id?.trim()
+    const categoryLevel2Id = query.categoryLevel2Id?.trim()
+    const limit = Number(query.limit ?? 100)
+
+    const itemOptions = filterExpenses(query)
+      .filter((item) => {
+        const level1Hit = !categoryLevel1Id || `${item.categoryLevel1Id}` === categoryLevel1Id
+        const level2Hit = !categoryLevel2Id || `${item.categoryLevel2Id}` === categoryLevel2Id
+        const storeHit = !storeId || `${item.storeId}` === storeId
+        return level1Hit && level2Hit && storeHit
+      })
+      .map((item) => item.itemName)
+      .filter((item, index, list) => list.indexOf(item) === index)
+      .sort((a, b) => a.localeCompare(b, 'zh-CN'))
+      .slice(0, limit)
+
+    return createResponse(itemOptions)
+  }
+
   if (pathname === '/api/expenses' && method === 'GET') {
     const query = parseUrl(config).query
     const list = filterExpenses(query)

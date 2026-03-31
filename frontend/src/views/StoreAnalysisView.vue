@@ -8,8 +8,20 @@
       <template #meta>
         <el-tag effect="light" round>当前门店：{{ currentStore?.name ?? '未选择' }}</el-tag>
         <el-tag effect="light" round type="success">状态：{{ currentStore ? (currentStore.status === 'ENABLED' ? '营业中' : '停用') : '未选择' }}</el-tag>
+        <el-tag effect="light" round type="warning">时间范围：{{ dateLabel }}</el-tag>
       </template>
       <template #actions>
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          value-format="YYYY-MM-DD"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          unlink-panels
+          :clearable="false"
+          class="date-range-picker"
+        />
         <el-select v-model="selectedStoreId" placeholder="选择门店" class="store-select">
           <el-option v-for="store in stores" :key="store.id" :label="store.name" :value="store.id" />
         </el-select>
@@ -56,7 +68,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
-import { buildBarChart, formatCurrency, mapDonutItems, mapTrendPoints, toRangeQueryParams } from '@/app/canguan'
+import { buildBarChart, formatCurrency, mapDonutItems, mapTrendPoints, toLocalDateString, toRangeQueryParams } from '@/app/canguan'
 import PageHero from '@/components/common/PageHero.vue'
 import PageSection from '@/components/common/PageSection.vue'
 import MetricCard from '@/components/common/MetricCard.vue'
@@ -76,11 +88,7 @@ function resolveDateRange() {
   const end = new Date()
   const start = new Date()
   start.setDate(end.getDate() - 6)
-  const toText = (value: Date) => value.toISOString().slice(0, 10)
-  return {
-    start: toText(start),
-    end: toText(end),
-  }
+  return [toLocalDateString(start), toLocalDateString(end)]
 }
 
 const route = useRoute()
@@ -93,8 +101,9 @@ const trendRows = ref<TrendPointDto[]>([])
 const categoryRows = ref<CategoryBreakdownDto[]>([])
 const rankingRows = ref<ItemRankingDto[]>([])
 const recentRows = ref<ExpenseRecordDto[]>([])
-const dateRange = resolveDateRange()
+const dateRange = ref<string[]>(resolveDateRange())
 
+const dateLabel = computed(() => (dateRange.value.length === 2 ? `${dateRange.value[0]} 至 ${dateRange.value[1]}` : '未限定'))
 const currentStore = computed(() => stores.value.find((item) => item.id === selectedStoreId.value) ?? null)
 const trendData = computed(() => mapTrendPoints(trendRows.value.map((item) => ({ label: item.label, amount: Number(item.amount) }))))
 const categoryData = computed(() => mapDonutItems(categoryRows.value.map((item) => ({ categoryName: item.categoryName, ratio: Number(item.ratio) }))))
@@ -113,15 +122,15 @@ const analysisMetrics = computed<MetricCardItem[]>(() => {
     return [
       { label: '今日支出', value: formatCurrency(0), hint: '等待加载数据', trend: '0.00', tone: 'primary' },
       { label: '本月支出', value: formatCurrency(0), hint: '等待加载数据', trend: '0.00', tone: 'success' },
-      { label: '当前区间', value: formatCurrency(0), hint: `${dateRange.start} 至 ${dateRange.end}`, trend: '0.00', tone: 'warning' },
+      { label: '当前区间', value: formatCurrency(0), hint: dateLabel.value, trend: '0.00', tone: 'warning' },
       { label: '当前门店', value: currentStore.value?.name ?? '-', hint: '单店视角', trend: currentStore.value?.status ?? '-', tone: 'danger' },
     ]
   }
 
   return [
     { label: '今日支出', value: formatCurrency(Number(data.todayAmount)), hint: '按自然日统计', trend: currentStore.value?.name ?? '-', tone: 'primary' },
-    { label: '本月支出', value: formatCurrency(Number(data.monthAmount)), hint: '本月累计支出', trend: `${dateRange.end}`, tone: 'success' },
-    { label: '当前区间', value: formatCurrency(Number(data.rangeAmount)), hint: `${dateRange.start} 至 ${dateRange.end}`, trend: `${recentRows.value.length} 条最近记录`, tone: 'warning' },
+    { label: '本月支出', value: formatCurrency(Number(data.monthAmount)), hint: '本月累计支出', trend: dateRange.value[1] ?? '-', tone: 'success' },
+    { label: '当前区间', value: formatCurrency(Number(data.rangeAmount)), hint: dateLabel.value, trend: `${recentRows.value.length} 条最近记录`, tone: 'warning' },
     {
       label: '当前门店',
       value: currentStore.value?.name || '-',
@@ -159,7 +168,7 @@ async function loadAnalysis() {
 
   loading.value = true
   try {
-    const dateParams = toRangeQueryParams([dateRange.start, dateRange.end])
+    const dateParams = toRangeQueryParams(dateRange.value)
     const params = {
       storeId: selectedStoreId.value,
       ...dateParams,
@@ -204,6 +213,17 @@ watch(selectedStoreId, (value, oldValue) => {
   loadAnalysis()
 })
 
+watch(
+  () => dateRange.value.join('|'),
+  (value, oldValue) => {
+    if (!initialized.value || value === oldValue) {
+      return
+    }
+    // 单店分析页的趋势、排行和最近支出必须同步切换到同一个时间范围。
+    loadAnalysis()
+  },
+)
+
 onMounted(async () => {
   try {
     await loadStores()
@@ -239,6 +259,10 @@ onMounted(async () => {
   width: 220px;
 }
 
+.date-range-picker {
+  width: 300px;
+}
+
 @media (max-width: 1280px) {
   .metric-grid,
   .analysis-grid {
@@ -257,6 +281,10 @@ onMounted(async () => {
   }
 
   .store-select {
+    width: 100%;
+  }
+
+  .date-range-picker {
     width: 100%;
   }
 }

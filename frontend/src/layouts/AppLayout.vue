@@ -263,3 +263,33 @@ async function handleCommand(command: string) {
   }
 }
 </script>
+
+<style scoped>
+.workspace-menu-scroll :deep(.el-scrollbar__wrap) {
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.workspace-menu-scroll :deep(.el-scrollbar__wrap::-webkit-scrollbar) {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.workspace-menu-scroll :deep(.el-scrollbar__view) {
+  width: 100%;
+}
+
+.workspace-menu-scroll :deep(.el-scrollbar__bar) {
+  display: none !important;
+}
+
+.workspace-menu-scroll :deep(.el-scrollbar__bar.is-vertical) {
+  display: none;
+}
+
+.workspace-menu-scroll :deep(.workspace-menu) {
+  border-right: none !important;
+}
+</style>
