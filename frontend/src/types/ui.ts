@@ -39,6 +39,23 @@ export interface ExpenseFormModel {
   remark: string
 }
 
+export interface ExpenseBatchSharedForm {
+  storeId: number | ''
+  expenseDate: string
+  categoryLevel1Id: number | ''
+  categoryLevel2Id: number | ''
+}
+
+export interface ExpenseBatchRowForm {
+  key: string
+  itemName: string
+  amount: number | null
+  quantity: number | null
+  unit: string
+  remark: string
+  errorMessage: string
+}
+
 export interface ExpenseFilterModel {
   storeId: number | ''
   dateRange: string[]

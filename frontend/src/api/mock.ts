@@ -231,6 +231,24 @@ const histories: ExpenseHistoryDto[] = [
   },
 ]
 
+const units = ['克', '千克', '公斤', '斤', '两', '吨', '毫升', '升', '立方米', '毫米', '厘米', '米', '个', '只', '件', '条', '根', '块', '片', '张', '页', '本', '册', '支', '把', '串', '捆', '束', '双', '对', '套', '台', '台套', '包', '袋', '箱', '盒', '桶', '瓶', '罐', '听', '杯', '筒', '卷', '提', '板', '排', '托', '盘', '次', '小时', '天', '周', '月', '季度', '年', '单', '笔', '项']
+
+function normalizeUnit(value: string | null | undefined) {
+  const unit = value?.trim() ?? ''
+  return unit || null
+}
+
+function ensureMockUnit(value: string | null | undefined) {
+  const unit = normalizeUnit(value)
+  if (!unit) {
+    return null
+  }
+  if (!units.includes(unit)) {
+    units.push(unit)
+  }
+  return unit
+}
+
 function currentUserFromSession(): CurrentUserDto {
   const session = readAuthSession()
   if (session?.userInfo) {
@@ -621,13 +639,14 @@ function handleCategories(pathname: string, method: string, config: AxiosRequest
 
   if (pathname === '/api/categories' && method === 'POST') {
     const body = parseBody<{ parentId: number; level: 1 | 2; name: string; code: string; defaultUnit: string | null; sortNo: number; status: StatusValue }>(config)
+    const defaultUnit = ensureMockUnit(body.defaultUnit)
     const next = {
       id: Date.now(),
       parentId: body.parentId,
       level: body.level,
       name: body.name,
       code: body.code,
-      defaultUnit: body.defaultUnit,
+      defaultUnit,
       sortNo: body.sortNo,
       status: body.status,
       createdAt: formatDateTime(now()),
@@ -650,7 +669,7 @@ function handleCategories(pathname: string, method: string, config: AxiosRequest
     if (!target) {
       return createError('DATA_NOT_FOUND', '分类不存在')
     }
-    Object.assign(target, body, { updatedAt: formatDateTime(now()) })
+    Object.assign(target, body, { defaultUnit: ensureMockUnit(body.defaultUnit), updatedAt: formatDateTime(now()) })
     return createResponse(target)
   }
 
@@ -664,6 +683,21 @@ function handleCategories(pathname: string, method: string, config: AxiosRequest
     target.status = body.status
     target.updatedAt = formatDateTime(now())
     return createResponse(target)
+  }
+
+  return createError('DATA_NOT_FOUND', `未找到接口：${pathname}`)
+}
+
+function handleUnits(pathname: string, method: string, config: AxiosRequestConfig): ApiResponse<unknown> {
+  if (pathname === '/api/units/options' && method === 'GET') {
+    const query = parseUrl(config).query
+    const keyword = query.keyword?.trim().toLowerCase() ?? ''
+    const limit = Number(query.limit ?? 200)
+    const result = units
+      .filter((item) => !keyword || item.toLowerCase().includes(keyword))
+      .sort((a, b) => a.localeCompare(b, 'zh-CN'))
+      .slice(0, limit)
+    return createResponse(result)
   }
 
   return createError('DATA_NOT_FOUND', `未找到接口：${pathname}`)
@@ -726,6 +760,7 @@ function handleExpenses(pathname: string, method: string, config: AxiosRequestCo
     const store = stores.find((item) => item.id === body.storeId)
     const category1 = categories.find((item) => item.id === body.categoryLevel1Id)
     const category2 = categories.flatMap((item) => [item, ...item.children]).find((item) => item.id === body.categoryLevel2Id)
+    const unit = ensureMockUnit(body.unit)
 
     const next: ExpenseRecordDto = {
       id: expenseRecords.length + 1,
@@ -739,7 +774,7 @@ function handleExpenses(pathname: string, method: string, config: AxiosRequestCo
       itemName: body.itemName,
       amount: Number(body.amount.toFixed(2)),
       quantity: body.quantity,
-      unit: body.unit,
+      unit: unit ?? '',
       remark: body.remark,
       createdBy: currentUserFromSession().id,
       createdByName: currentUserFromSession().displayName,
@@ -784,6 +819,7 @@ function handleExpenses(pathname: string, method: string, config: AxiosRequestCo
     const before = toSnapshot(target)
     const category1 = categories.find((item) => item.id === body.categoryLevel1Id)
     const category2 = categories.flatMap((item) => [item, ...item.children]).find((item) => item.id === body.categoryLevel2Id)
+    const unit = ensureMockUnit(body.unit)
     Object.assign(target, {
       storeId: body.storeId,
       storeName: stores.find((item) => item.id === body.storeId)?.name ?? target.storeName,
@@ -795,7 +831,7 @@ function handleExpenses(pathname: string, method: string, config: AxiosRequestCo
       itemName: body.itemName,
       amount: Number(body.amount.toFixed(2)),
       quantity: body.quantity,
-      unit: body.unit,
+      unit: unit ?? '',
       remark: body.remark,
       updatedBy: currentUserFromSession().id,
       updatedByName: currentUserFromSession().displayName,
@@ -887,6 +923,9 @@ export async function mockRequest<T>(config: AxiosRequestConfig): Promise<ApiRes
   }
   if (pathname.startsWith('/api/categories')) {
     return handleCategories(pathname, method, config) as ApiResponse<T>
+  }
+  if (pathname.startsWith('/api/units')) {
+    return handleUnits(pathname, method, config) as ApiResponse<T>
   }
   if (pathname.startsWith('/api/expenses')) {
     return handleExpenses(pathname, method, config) as ApiResponse<T>

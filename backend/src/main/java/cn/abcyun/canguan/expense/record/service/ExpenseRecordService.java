@@ -40,6 +40,7 @@ import cn.abcyun.canguan.expense.support.PageResult;
 import cn.abcyun.canguan.expense.support.ExpenseActionEnum;
 import cn.abcyun.canguan.expense.support.StatusEnum;
 import cn.abcyun.canguan.expense.support.UserRoleEnum;
+import cn.abcyun.canguan.expense.unit.service.UnitService;
 import cn.abcyun.canguan.expense.user.entity.SysUser;
 import cn.abcyun.canguan.expense.user.repository.SysUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +67,7 @@ public class ExpenseRecordService {
     private final StoreService storeService;
     private final CategoryService categoryService;
     private final CurrentUserProvider currentUserProvider;
+    private final UnitService unitService;
     private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
@@ -114,7 +116,7 @@ public class ExpenseRecordService {
         ExpenseCategory level2 = categoryService.requireActiveCategory(request.getCategoryLevel2Id());
         validateCategoryRelation(level1, level2);
         ExpenseRecord record = new ExpenseRecord();
-        fillRecord(record, request, currentUser, store.getId(), level1, level2);
+        fillRecord(record, request, currentUser, store.getId(), level1, level2, unitService.normalizeAndEnsure(request.getUnit()));
         ExpenseRecord saved = expenseRecordRepository.save(record);
         saveHistory(saved.getId(), ExpenseActionEnum.CREATE, null, toSnapshot(saved), currentUser);
         return toDto(saved, loadStoreMap(java.util.Collections.singletonList(saved)), loadUserMap(java.util.Collections.singletonList(saved)));
@@ -133,7 +135,7 @@ public class ExpenseRecordService {
         ExpenseCategory level1 = categoryService.requireActiveCategory(request.getCategoryLevel1Id());
         ExpenseCategory level2 = categoryService.requireActiveCategory(request.getCategoryLevel2Id());
         validateCategoryRelation(level1, level2);
-        fillRecord(record, request, currentUser, store.getId(), level1, level2);
+        fillRecord(record, request, currentUser, store.getId(), level1, level2, unitService.normalizeAndEnsure(request.getUnit()));
         ExpenseRecord saved = expenseRecordRepository.save(record);
         saveHistory(saved.getId(), ExpenseActionEnum.UPDATE, before, toSnapshot(saved), currentUser);
         return toDto(saved, loadStoreMap(java.util.Collections.singletonList(saved)), loadUserMap(java.util.Collections.singletonList(saved)));
@@ -189,7 +191,7 @@ public class ExpenseRecordService {
     }
 
     private void fillRecord(ExpenseRecord record, ExpenseUpsertRequest request, CurrentUserContext currentUser, Long storeId,
-                            ExpenseCategory level1, ExpenseCategory level2) {
+                            ExpenseCategory level1, ExpenseCategory level2, String normalizedUnit) {
         record.setStoreId(storeId);
         record.setExpenseDate(request.getExpenseDate());
         record.setCategoryLevel1Id(level1.getId());
@@ -199,7 +201,7 @@ public class ExpenseRecordService {
         record.setItemName(request.getItemName().trim());
         record.setAmount(request.getAmount());
         record.setQuantity(request.getQuantity());
-        record.setUnit(StringUtils.hasText(request.getUnit()) ? request.getUnit().trim() : null);
+        record.setUnit(normalizedUnit);
         record.setRemark(StringUtils.hasText(request.getRemark()) ? request.getRemark().trim() : null);
         if (record.getId() == null) {
             record.setCreatedBy(currentUser.getId());

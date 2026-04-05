@@ -155,6 +155,17 @@
       @submit="saveExpense"
     />
 
+    <ExpenseBatchFormDrawer
+      ref="batchDrawerRef"
+      v-model="batchDrawerVisible"
+      :stores="formStores"
+      :categories="categories"
+      :store-locked="isClerk"
+      :loading="batchSaving"
+      :initial-store-id="isClerk ? clerkStoreId : formStores.find((item) => item.status === 'ENABLED')?.id ?? formStores[0]?.id ?? ''"
+      @submit="saveBatchExpenses"
+    />
+
     <ExpenseHistoryDrawer v-model="historyVisible" :record="selectedRow" :history="selectedHistory" />
   </div>
 </template>
@@ -164,7 +175,6 @@ import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 import {
-  createExpenseTemplate,
   flattenCategoryTree,
   formatCurrency,
   mapExpenseRecordToForm,
@@ -177,6 +187,7 @@ import PageSection from '@/components/common/PageSection.vue'
 import MetricCard from '@/components/common/MetricCard.vue'
 import StatusTag from '@/components/common/StatusTag.vue'
 import ExpenseFilterBar from '@/components/expense/ExpenseFilterBar.vue'
+import ExpenseBatchFormDrawer from '@/components/expense/ExpenseBatchFormDrawer.vue'
 import ExpenseFormDrawer from '@/components/expense/ExpenseFormDrawer.vue'
 import ExpenseHistoryDrawer from '@/components/expense/ExpenseHistoryDrawer.vue'
 import { listCategoryTreeApi, listStoresApi } from '@/api/catalog'
@@ -186,7 +197,7 @@ import { useAuthStore } from '@/stores/auth'
 import type { CategoryNodeDto } from '@/types/category'
 import type { ExpenseRecordDto, ExpenseUpsertReq } from '@/types/expense'
 import type { StoreDto } from '@/types/store'
-import type { ExpenseFilterModel, ExpenseFormModel, ExpenseHistoryEntry, MetricCardItem } from '@/types/ui'
+import type { ExpenseBatchRowForm, ExpenseBatchSharedForm, ExpenseFilterModel, ExpenseFormModel, ExpenseHistoryEntry, MetricCardItem } from '@/types/ui'
 
 function resolveDefaultDateRange() {
   const end = new Date()
@@ -216,11 +227,16 @@ const quickKeyword = ref('')
 const pageNo = ref(1)
 const pageSize = ref(10)
 const drawerVisible = ref(false)
+const batchDrawerVisible = ref(false)
 const historyVisible = ref(false)
 const selectedRow = ref<ExpenseRecordDto | null>(null)
 const selectedHistory = ref<ExpenseHistoryEntry[]>([])
 const editingForm = ref<Partial<ExpenseFormModel> | null>(null)
 const drawerTitle = ref('新增支出')
+const batchSaving = ref(false)
+const batchDrawerRef = ref<{
+  applySubmitResult: (result: { successKeys: string[]; failures: Array<{ key: string; message: string }> }) => void
+} | null>(null)
 
 const isClerk = computed(() => authStore.role === 'CLERK')
 const clerkStoreId = computed(() => authStore.userInfo?.storeId ?? '')
@@ -350,14 +366,9 @@ function resetFilters() {
 }
 
 function openCreate() {
-  drawerTitle.value = '新增支出'
   selectedRow.value = null
-  editingForm.value = createExpenseTemplate({
-    stores: formStores.value,
-    categories: categories.value,
-    storeId: isClerk.value ? clerkStoreId.value : formStores.value.find((item) => item.status === 'ENABLED')?.id ?? formStores.value[0]?.id ?? '',
-  })
-  drawerVisible.value = true
+  editingForm.value = null
+  batchDrawerVisible.value = true
 }
 
 function openEdit(row: ExpenseRecordDto) {
@@ -394,6 +405,53 @@ async function saveExpense(form: ExpenseFormModel) {
     ElMessage.error(error instanceof Error ? error.message : '保存支出失败')
   } finally {
     drawerSaving.value = false
+  }
+}
+
+async function saveBatchExpenses(payload: { shared: ExpenseBatchSharedForm; rows: ExpenseBatchRowForm[] }) {
+  batchSaving.value = true
+  const successKeys: string[] = []
+  const failures: Array<{ key: string; message: string }> = []
+
+  try {
+    // 批量新增继续复用现有单条接口，顺序提交可以保证提示和失败定位稳定。
+    for (const row of payload.rows) {
+      try {
+        await createExpenseApi({
+          storeId: Number(isClerk.value ? clerkStoreId.value : payload.shared.storeId),
+          expenseDate: payload.shared.expenseDate,
+          categoryLevel1Id: Number(payload.shared.categoryLevel1Id),
+          categoryLevel2Id: Number(payload.shared.categoryLevel2Id),
+          itemName: row.itemName,
+          amount: Number(row.amount ?? 0),
+          quantity: row.quantity == null ? null : Number(row.quantity),
+          unit: row.unit,
+          remark: row.remark,
+        })
+        successKeys.push(row.key)
+      } catch (error) {
+        failures.push({
+          key: row.key,
+          message: error instanceof Error ? error.message : '保存失败',
+        })
+      }
+    }
+
+    batchDrawerRef.value?.applySubmitResult({ successKeys, failures })
+
+    if (successKeys.length) {
+      await loadExpenses()
+    }
+
+    if (!failures.length) {
+      batchDrawerVisible.value = false
+      ElMessage.success(`批量新增成功，共 ${successKeys.length} 条`)
+      return
+    }
+
+    ElMessage.warning(`批量提交完成，成功 ${successKeys.length} 条，失败 ${failures.length} 条`)
+  } finally {
+    batchSaving.value = false
   }
 }
 

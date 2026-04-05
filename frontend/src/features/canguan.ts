@@ -345,8 +345,6 @@ export const mockStoreComparisons: StoreComparisonItem[] = [
   { storeId: 'store-003', storeName: '高新体验店', today: 0, month: 0, lastMonth: 0, growth: 0 },
 ]
 
-export const unitOptions = ['斤', '袋', '桶', '瓶', '箱', '包', '卷', '本', '支', '张', '月', '次']
-
 export function formatCurrency(value: number): string {
   return `¥ ${value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
@@ -401,4 +399,3 @@ export function createExpenseTemplate(storeId = mockStores[0]?.id ?? ''): Expens
     remark: '',
   }
 }
-

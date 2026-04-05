@@ -24,6 +24,7 @@ import cn.abcyun.canguan.expense.support.PageExtra;
 import cn.abcyun.canguan.expense.support.PageResult;
 import cn.abcyun.canguan.expense.support.StatusEnum;
 import cn.abcyun.canguan.expense.support.UserRoleEnum;
+import cn.abcyun.canguan.expense.unit.service.UnitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +42,7 @@ public class CategoryService {
     private final ExpenseCategoryRepository expenseCategoryRepository;
     private final CurrentUserProvider currentUserProvider;
     private final StoreService storeService;
+    private final UnitService unitService;
 
     @Transactional(readOnly = true)
     public List<CategoryNodeDto> tree() {
@@ -144,7 +146,8 @@ public class CategoryService {
         category.setLevel(request.getLevel());
         category.setName(request.getName().trim());
         category.setCode(request.getCode().trim());
-        category.setDefaultUnit(StringUtils.hasText(request.getDefaultUnit()) ? request.getDefaultUnit().trim() : null);
+        // 分类默认单位继续存字符串，但候选来源改由单位主数据统一沉淀。
+        category.setDefaultUnit(unitService.normalizeAndEnsure(request.getDefaultUnit()));
         category.setSortNo(Optional.ofNullable(request.getSortNo()).orElse(0));
         category.setStatus(Optional.ofNullable(request.getStatus()).orElse(StatusEnum.ENABLED));
     }

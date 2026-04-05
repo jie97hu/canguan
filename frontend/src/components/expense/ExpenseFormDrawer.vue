@@ -51,7 +51,15 @@
       </div>
       <div class="category-grid">
         <el-form-item label="单位" prop="unit">
-          <el-select v-model="form.unit" filterable placeholder="单位">
+          <el-select
+            v-model="form.unit"
+            filterable
+            allow-create
+            clearable
+            reserve-keyword
+            :loading="unitOptionsLoading"
+            placeholder="可选择已有单位，也可手动输入"
+          >
             <el-option v-for="item in unitOptions" :key="item" :label="item" :value="item" />
           </el-select>
         </el-form-item>
@@ -73,8 +81,9 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
-import { createExpenseTemplate, getCategoryById, getCategoryChildren, unitOptions } from '@/app/canguan'
+import { createExpenseTemplate, getCategoryById, getCategoryChildren } from '@/app/canguan'
 import { listExpenseItemOptionsApi } from '@/api/expense'
+import { listUnitOptionsApi } from '@/api/unit'
 import { useAppStore } from '@/stores/app'
 import type { CategoryNodeDto } from '@/types/category'
 import type { StoreDto } from '@/types/store'
@@ -106,8 +115,11 @@ const emit = defineEmits<{
 const appStore = useAppStore()
 const formRef = ref<FormInstance>()
 const itemOptions = ref<string[]>([])
+const unitOptions = ref<string[]>([])
 const itemOptionsLoading = ref(false)
+const unitOptionsLoading = ref(false)
 let itemOptionsRequestId = 0
+let unitOptionsRequestId = 0
 
 const visible = computed({
   get: () => props.modelValue,
@@ -141,8 +153,10 @@ watch(
         form.unit = resolveDefaultUnit(form.categoryLevel2Id)
       }
       void loadItemOptions()
+      void loadUnitOptions()
     } else {
       itemOptions.value = []
+      unitOptions.value = []
     }
   },
   { immediate: true },
@@ -204,6 +218,43 @@ async function loadItemOptions() {
   }
 }
 
+function mergeCurrentUnit(options: string[]) {
+  const currentUnit = form.unit.trim()
+  if (!currentUnit) {
+    return options
+  }
+  if (options.includes(currentUnit)) {
+    return options
+  }
+  return [currentUnit, ...options]
+}
+
+async function loadUnitOptions() {
+  const requestId = ++unitOptionsRequestId
+  if (!visible.value) {
+    return
+  }
+  unitOptionsLoading.value = true
+  try {
+    const options = await listUnitOptionsApi({ limit: 200 })
+    if (requestId !== unitOptionsRequestId) {
+      return
+    }
+    unitOptions.value = mergeCurrentUnit(options)
+  } catch (error) {
+    if (requestId !== unitOptionsRequestId) {
+      return
+    }
+    // 单位候选加载失败时仍允许手动输入，避免阻断记账。
+    unitOptions.value = mergeCurrentUnit([])
+    ElMessage.error(error instanceof Error ? error.message : '加载单位候选失败')
+  } finally {
+    if (requestId === unitOptionsRequestId) {
+      unitOptionsLoading.value = false
+    }
+  }
+}
+
 function handleLevel1Change(categoryId: number | '') {
   const next = getCategoryChildren(props.categories, categoryId).find((item) => item.status === 'ENABLED')
   form.categoryLevel2Id = next?.id ?? ''
@@ -228,6 +279,13 @@ watch(
   () => form.itemName,
   () => {
     itemOptions.value = mergeCurrentItemName(itemOptions.value.filter((item, index, list) => list.indexOf(item) === index))
+  },
+)
+
+watch(
+  () => form.unit,
+  () => {
+    unitOptions.value = mergeCurrentUnit(unitOptions.value.filter((item, index, list) => list.indexOf(item) === index))
   },
 )
 

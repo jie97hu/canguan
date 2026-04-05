@@ -2,9 +2,15 @@ import type { AppRole } from '@/types/auth'
 import type { CategoryNodeDto } from '@/types/category'
 import type { ExpenseHistoryDto, ExpenseRecordDto } from '@/types/expense'
 import type { StoreDto } from '@/types/store'
-import type { BarChartItem, DonutChartItem, ExpenseFormModel, ExpenseHistoryEntry, TrendChartPoint } from '@/types/ui'
-
-export const unitOptions = ['斤', '袋', '桶', '瓶', '箱', '包', '卷', '本', '支', '张', '月', '次']
+import type {
+  BarChartItem,
+  DonutChartItem,
+  ExpenseBatchRowForm,
+  ExpenseBatchSharedForm,
+  ExpenseFormModel,
+  ExpenseHistoryEntry,
+  TrendChartPoint,
+} from '@/types/ui'
 
 const chartColors = ['#2858FF', '#1EAE98', '#E36B2C', '#9B6BFF', '#FF8A5C', '#2F6BFF', '#F4A261', '#3A86FF']
 
@@ -60,6 +66,33 @@ export function createExpenseTemplate(options: {
     quantity: null,
     unit: level2?.defaultUnit ?? '斤',
     remark: '',
+  }
+}
+
+export function createExpenseBatchSharedTemplate(options: {
+  stores: StoreDto[]
+  categories: CategoryNodeDto[]
+  storeId?: number | ''
+  expenseDate?: string
+}): ExpenseBatchSharedForm {
+  const template = createExpenseTemplate(options)
+  return {
+    storeId: template.storeId,
+    expenseDate: template.expenseDate,
+    categoryLevel1Id: template.categoryLevel1Id,
+    categoryLevel2Id: template.categoryLevel2Id,
+  }
+}
+
+export function createExpenseBatchRowTemplate(defaultUnit = '斤'): ExpenseBatchRowForm {
+  return {
+    key: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    itemName: '',
+    amount: null,
+    quantity: null,
+    unit: defaultUnit,
+    remark: '',
+    errorMessage: '',
   }
 }
 

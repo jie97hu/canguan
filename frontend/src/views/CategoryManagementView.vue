@@ -98,7 +98,7 @@
         </div>
         <div class="grid">
           <el-form-item label="默认单位" prop="defaultUnit">
-            <el-select v-model="form.defaultUnit" clearable allow-create filterable>
+            <el-select v-model="form.defaultUnit" clearable allow-create filterable reserve-keyword :loading="unitLoading">
               <el-option v-for="unit in unitOptions" :key="unit" :label="unit" :value="unit" />
             </el-select>
           </el-form-item>
@@ -128,7 +128,8 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
 
-import { flattenCategoryTree, unitOptions } from '@/app/canguan'
+import { flattenCategoryTree } from '@/app/canguan'
+import { listUnitOptionsApi } from '@/api/unit'
 import PageHero from '@/components/common/PageHero.vue'
 import PageSection from '@/components/common/PageSection.vue'
 import StatusTag from '@/components/common/StatusTag.vue'
@@ -139,7 +140,9 @@ import type { CategoryNodeDto, CategoryUpsertReq } from '@/types/category'
 const appStore = useAppStore()
 const loading = ref(false)
 const saving = ref(false)
+const unitLoading = ref(false)
 const treeData = ref<CategoryNodeDto[]>([])
+const unitOptions = ref<string[]>([])
 const selectedId = ref<number | null>(null)
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增分类')
@@ -202,6 +205,19 @@ async function loadCategoryTree() {
     ElMessage.error(error instanceof Error ? error.message : '加载分类失败')
   } finally {
     loading.value = false
+  }
+}
+
+async function loadUnitOptions() {
+  unitLoading.value = true
+  try {
+    unitOptions.value = await listUnitOptionsApi({ limit: 200 })
+  } catch (error) {
+    // 分类页即使拿不到单位候选，也要允许老板手动输入默认单位。
+    unitOptions.value = []
+    ElMessage.error(error instanceof Error ? error.message : '加载单位候选失败')
+  } finally {
+    unitLoading.value = false
   }
 }
 
@@ -286,7 +302,7 @@ async function saveCategory() {
       ElMessage.success('分类已新增')
     }
     dialogVisible.value = false
-    await loadCategoryTree()
+    await Promise.all([loadCategoryTree(), loadUnitOptions()])
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '保存分类失败')
   } finally {
@@ -308,6 +324,7 @@ async function toggleStatus(row: CategoryNodeDto) {
 
 onMounted(() => {
   loadCategoryTree()
+  loadUnitOptions()
 })
 </script>
 
