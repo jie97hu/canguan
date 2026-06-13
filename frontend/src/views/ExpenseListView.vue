@@ -223,7 +223,12 @@ const query = ref<ExpenseFilterModel>({
   categoryLevel2Id: '',
   itemName: '',
 })
-const quickKeyword = ref('')
+const quickKeyword = computed({
+  get: () => query.value.itemName,
+  set: (value: string) => {
+    query.value.itemName = value ?? ''
+  },
+})
 const pageNo = ref(1)
 const pageSize = ref(10)
 const drawerVisible = ref(false)
@@ -343,12 +348,14 @@ async function loadExpenses() {
 
 function applyFilters() {
   pageNo.value = 1
-  query.value.itemName = quickKeyword.value.trim()
+  // 查询按钮只使用当前筛选模型，避免快速搜索框的空值覆盖品项条件。
+  query.value.itemName = query.value.itemName.trim()
   loadExpenses()
 }
 
 function applyQuickSearch() {
-  query.value.itemName = quickKeyword.value.trim()
+  // 快速搜索与筛选栏共用同一份品项条件，触发时直接沿用统一查询入口。
+  query.value.itemName = query.value.itemName.trim()
   applyFilters()
 }
 
@@ -360,7 +367,6 @@ function resetFilters() {
     categoryLevel2Id: '',
     itemName: '',
   }
-  quickKeyword.value = ''
   pageNo.value = 1
   loadExpenses()
 }
